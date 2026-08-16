@@ -77,35 +77,45 @@
     .detail-photo{width:100%;max-height:520px;object-fit:contain;background:#f3f4f5;border-radius:14px}
     .notice{background:#eef4ff;border:1px solid #c9dafe;border-radius:12px;padding:10px 12px}
     .invalid{border-color:var(--bad)!important}
+    .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .lang-toggle{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:3px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .lang-toggle button{border:0;background:transparent;color:var(--muted);font-weight:800;border-radius:999px;padding:8px 12px;min-width:48px}
+    .lang-toggle button.active{background:var(--accent);color:#fff}
   </style>
 </head>
 <body>
 <main class="app">
-  <header>
-    <h1>LRV Contrast</h1>
-    <p class="muted small">Volledig client-side. Metingen en foto's blijven lokaal op dit toestel.</p>
+  <header class="app-header">
+    <div>
+      <h1>LRV Contrast</h1>
+      <p class="muted small" data-i18n="clientSide">Volledig client-side. Metingen en foto's blijven lokaal op dit toestel.</p>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Taal / Langue">
+      <button id="langNl" type="button" class="active" aria-pressed="true">NL</button>
+      <button id="langFr" type="button" aria-pressed="false">FR</button>
+    </div>
   </header>
 
   <section class="card">
     <div class="grid g2">
-      <label>Project
-        <input id="project" type="text" autocomplete="off" placeholder="bv. Station Gent-Sint-Pieters">
+      <label><span data-i18n="project">Project</span>
+        <input id="project" type="text" autocomplete="off" placeholder="bv. Station Gent-Sint-Pieters" data-i18n-placeholder="projectPlaceholder">
       </label>
-      <label>Meetpunt / locatie
-        <input id="location" type="text" autocomplete="off" placeholder="bv. Perron 3 – trap">
+      <label><span data-i18n="location">Meetpunt / locatie</span>
+        <input id="location" type="text" autocomplete="off" placeholder="bv. Perron 3 – trap" data-i18n-placeholder="locationPlaceholder">
       </label>
     </div>
     <div class="grid g2" style="margin-top:12px">
-      <label>Aantal oppervlakken
+      <label><span data-i18n="surfaceCount">Aantal oppervlakken</span>
         <select id="surfaceCount">
-          <option value="2">2 oppervlakken</option>
-          <option value="3" selected>3 oppervlakken</option>
+          <option value="2" data-i18n="twoSurfaces">2 oppervlakken</option>
+          <option value="3" selected data-i18n="threeSurfaces">3 oppervlakken</option>
         </select>
       </label>
       <div>
-        <div class="small muted" style="margin-top:2px">Formule</div>
+        <div class="small muted" style="margin-top:2px" data-i18n="formula">Formule</div>
         <div style="margin-top:10px;font-weight:700">|LRV₁ − LRV₂| / (LRV₁ + LRV₂)</div>
-        <div class="small muted">Conform indien contrast &ge; 0,300</div>
+        <div class="small muted" data-i18n="conformIf">Conform indien contrast ≥ 0,300</div>
       </div>
     </div>
   </section>
@@ -114,27 +124,27 @@
 
   <section class="card">
     <div class="topline">
-      <h2>Contrastresultaten</h2>
-      <span id="overallBadge" class="badge">Nog geen resultaat</span>
+      <h2 data-i18n="contrastResults">Contrastresultaten</h2>
+      <span id="overallBadge" class="badge" data-i18n="noResult">Nog geen resultaat</span>
     </div>
     <div id="contrastGrid" class="contrast-grid" style="margin-top:12px"></div>
   </section>
 
   <section class="card">
-    <h2>Foto bij deze meting</h2>
-    <p class="small muted">Je kunt rechtstreeks de camera gebruiken of een bestaande foto kiezen.</p>
+    <h2 data-i18n="photoTitle">Foto bij deze meting</h2>
+    <p class="small muted" data-i18n="photoDesc">Je kunt rechtstreeks de camera gebruiken of een bestaande foto kiezen.</p>
     <div class="photo-zone">
       <div class="photo-actions">
-        <button id="openCamera" class="btn primary" type="button">📷 Foto nemen</button>
-        <button id="choosePhoto" class="btn secondary" type="button">Kies foto</button>
+        <button id="openCamera" class="btn primary" type="button"><span aria-hidden="true">📷</span> <span data-i18n="takePhoto">Foto nemen</span></button>
+        <button id="choosePhoto" class="btn secondary" type="button" data-i18n="choosePhoto">Kies foto</button>
       </div>
       <input id="cameraFallback" type="file" accept="image/*" capture="environment" hidden>
       <input id="photoPicker" type="file" accept="image/*" hidden>
       <div id="photoPreview" class="photo-preview">
-        <img id="photoPreviewImg" alt="Voorbeeld van foto">
+        <img id="photoPreviewImg" alt="Voorbeeld van foto" data-i18n-alt="photoPreviewAlt">
         <div class="actions" style="margin-top:10px">
           <span id="photoInfo" class="small muted"></span>
-          <button id="removePhoto" class="btn danger" type="button">Verwijder foto</button>
+          <button id="removePhoto" class="btn danger" type="button" data-i18n="removePhoto">Verwijder foto</button>
         </div>
       </div>
     </div>
@@ -142,8 +152,8 @@
 
   <section class="card">
     <div class="actions">
-      <button id="saveNext" class="btn primary" type="button">Bewaar & nieuwe meting</button>
-      <button id="reset" class="btn secondary" type="button">Nieuwe meting zonder bewaren</button>
+      <button id="saveNext" class="btn primary" type="button" data-i18n="saveNext">Bewaar & nieuwe meting</button>
+      <button id="reset" class="btn secondary" type="button" data-i18n="resetMeasurement">Nieuwe meting zonder bewaren</button>
     </div>
     <p id="saveMessage" class="small muted" role="status" style="margin-bottom:0"></p>
   </section>
@@ -151,30 +161,30 @@
   <section class="card">
     <div class="topline">
       <div>
-        <h2>Projectbeheer & export</h2>
-        <p class="small muted" style="margin:.35rem 0 0">
+        <h2 data-i18n="projectManage">Projectbeheer & export</h2>
+        <p class="small muted" style="margin:.35rem 0 0" data-i18n="projectManageDesc">
           Exporteer eerst je project als je een lokale kopie wilt bewaren. Een nieuw project wist alle lokaal bewaarde metingen en foto's.
         </p>
       </div>
-      <button id="newProject" class="btn danger" type="button">Nieuw project</button>
+      <button id="newProject" class="btn danger" type="button" data-i18n="newProject">Nieuw project</button>
     </div>
 
     <div class="grid g2" style="margin-top:14px">
       <div class="card" style="margin:0">
-        <h3>Huidige meting</h3>
-        <p class="small muted">Exporteert de waarden die nu op het scherm staan, ook als ze nog niet bewaard zijn.</p>
+        <h3 data-i18n="currentMeasurement">Huidige meting</h3>
+        <p class="small muted" data-i18n="currentMeasurementDesc">Exporteert de waarden die nu op het scherm staan, ook als ze nog niet bewaard zijn.</p>
         <div class="actions">
           <button id="exportMeasurementPdf" class="btn primary" type="button">PDF</button>
-          <button id="exportMeasurementTxt" class="btn secondary" type="button">Tekstbestand</button>
+          <button id="exportMeasurementTxt" class="btn secondary" type="button" data-i18n="textFile">Tekstbestand</button>
         </div>
       </div>
 
       <div class="card" style="margin:0">
-        <h3>Volledig huidig project</h3>
-        <p class="small muted">Exporteert alle lokaal bewaarde metingen van dit project, inclusief de gekoppelde foto's in de PDF.</p>
+        <h3 data-i18n="fullProject">Volledig huidig project</h3>
+        <p class="small muted" data-i18n="fullProjectDesc">Exporteert alle lokaal bewaarde metingen van dit project, inclusief de gekoppelde foto's in de PDF.</p>
         <div class="actions">
           <button id="exportProjectPdf" class="btn primary" type="button">PDF</button>
-          <button id="exportProjectTxt" class="btn secondary" type="button">Tekstbestand</button>
+          <button id="exportProjectTxt" class="btn secondary" type="button" data-i18n="textFile">Tekstbestand</button>
         </div>
       </div>
     </div>
@@ -184,16 +194,17 @@
   <section class="card">
     <div class="history-head">
       <div>
-        <h2>Bewaarde metingen</h2>
-        <div class="small muted">Tik op “Bekijk details” om ruwe waarden, contrasten en foto terug te zien.</div>
+        <h2 data-i18n="savedMeasurements">Bewaarde metingen</h2>
+        <div class="small muted" data-i18n="historyDesc">Tik op “Bekijk details” om ruwe waarden, contrasten en foto terug te zien.</div>
       </div>
-      <button id="clearHistory" class="btn danger" type="button">Wis bewaarde metingen</button>
+      <button id="clearHistory" class="btn danger" type="button" data-i18n="clearSaved">Wis bewaarde metingen</button>
     </div>
     <div id="history" style="margin-top:14px"></div>
   </section>
 
   <section class="notice small">
-    <strong>Lokale opslag:</strong> wis je Safari-websitegegevens of verwijder je de webappgegevens, dan kunnen lokaal bewaarde metingen en foto's verloren gaan.
+    <strong data-i18n="localStorageLabel">Lokale opslag:</strong>
+    <span data-i18n="localStorageDesc">wis je Safari-websitegegevens of verwijder je de webappgegevens, dan kunnen lokaal bewaarde metingen en foto's verloren gaan.</span>
   </section>
 </main>
 
@@ -201,14 +212,14 @@
 <div id="cameraModal" class="modal" aria-hidden="true">
   <div class="sheet">
     <div class="topline">
-      <h2>Camera</h2>
-      <button id="closeCamera" class="close" type="button" aria-label="Sluiten">×</button>
+      <h2 data-i18n="camera">Camera</h2>
+      <button id="closeCamera" class="close" type="button" aria-label="Sluiten" data-i18n-aria-label="close">×</button>
     </div>
     <p id="cameraStatus" class="small muted"></p>
     <video id="cameraVideo" autoplay playsinline muted></video>
     <canvas id="cameraCanvas" hidden></canvas>
     <div class="actions" style="margin-top:12px">
-      <button id="takePhoto" class="btn primary wide" type="button">Maak foto</button>
+      <button id="takePhoto" class="btn primary wide" type="button" data-i18n="makePhoto">Maak foto</button>
     </div>
   </div>
 </div>
@@ -217,8 +228,8 @@
 <div id="detailModal" class="modal" aria-hidden="true">
   <div class="sheet">
     <div class="topline">
-      <h2>Metingdetails</h2>
-      <button id="closeDetails" class="close" type="button" aria-label="Sluiten">×</button>
+      <h2 data-i18n="measurementDetails">Metingdetails</h2>
+      <button id="closeDetails" class="close" type="button" aria-label="Sluiten" data-i18n-aria-label="close">×</button>
     </div>
     <div id="detailContent"></div>
   </div>
@@ -231,7 +242,186 @@
   const DB_VERSION = 2;
   const STORE = "measurements";
 
+  const I18N = {
+    nl: {
+      clientSide:"Volledig client-side. Metingen en foto's blijven lokaal op dit toestel.",
+      project:"Project", projectPlaceholder:"bv. Station Gent-Sint-Pieters",
+      location:"Meetpunt / locatie", locationPlaceholder:"bv. Perron 3 – trap",
+      surfaceCount:"Aantal oppervlakken", twoSurfaces:"2 oppervlakken", threeSurfaces:"3 oppervlakken",
+      formula:"Formule", conformIf:"Conform indien contrast ≥ 0,300",
+      contrastResults:"Contrastresultaten", noResult:"Nog geen resultaat",
+      photoTitle:"Foto bij deze meting", photoDesc:"Je kunt rechtstreeks de camera gebruiken of een bestaande foto kiezen.",
+      takePhoto:"Foto nemen", choosePhoto:"Kies foto", photoPreviewAlt:"Voorbeeld van foto", removePhoto:"Verwijder foto",
+      saveNext:"Bewaar & nieuwe meting", resetMeasurement:"Nieuwe meting zonder bewaren",
+      projectManage:"Projectbeheer & export",
+      projectManageDesc:"Exporteer eerst je project als je een lokale kopie wilt bewaren. Een nieuw project wist alle lokaal bewaarde metingen en foto's.",
+      newProject:"Nieuw project", currentMeasurement:"Huidige meting",
+      currentMeasurementDesc:"Exporteert de waarden die nu op het scherm staan, ook als ze nog niet bewaard zijn.",
+      textFile:"Tekstbestand", fullProject:"Volledig huidig project",
+      fullProjectDesc:"Exporteert alle lokaal bewaarde metingen van dit project, inclusief de gekoppelde foto's in de PDF.",
+      savedMeasurements:"Bewaarde metingen", historyDesc:"Tik op “Bekijk details” om ruwe waarden, contrasten en foto terug te zien.",
+      clearSaved:"Wis bewaarde metingen", localStorageLabel:"Lokale opslag:",
+      localStorageDesc:"wis je Safari-websitegegevens of verwijder je de webappgegevens, dan kunnen lokaal bewaarde metingen en foto's verloren gaan.",
+      camera:"Camera", close:"Sluiten", makePhoto:"Maak foto", measurementDetails:"Metingdetails",
+      surface:"Oppervlak", description:"Omschrijving", avg:"Gem.", average:"Gemiddelde",
+      invalidValue:"Ongeldige waarde", deleteLrv:"Verwijder LRV", addLrv:"+ LRV-meting toevoegen",
+      conform:"CONFORM", nonConform:"NIET CONFORM", waiting:"Wachten",
+      fillSurfaces:"Vul alle oppervlakken in", comparisonComplete:"Vergelijking voltooid",
+      conformComparison:"CONFORME VERGELIJKING", conformComparisons:"CONFORME VERGELIJKINGEN",
+      requirement:"Vereiste: contrast ≥ 0,300",
+      photoProcessing:"Foto verwerken…", photoAdded:"Foto toegevoegd.", photoError:"De foto kon niet worden verwerkt.",
+      cameraHint:"Richt de camera en tik op “Maak foto”.",
+      invalidSave:"Controleer of elk actief oppervlak minstens één geldige LRV-waarde bevat.",
+      saveFailed:"Opslaan is mislukt.", savedNext:"Meting bewaard. Klaar voor de volgende.",
+      noSaved:"Nog geen metingen bewaard.", measurementSaved:"Meting bewaard",
+      noLocation:"Meetpunt zonder naam", noProject:"Geen project", photoAtMeasurement:"Foto bij meting",
+      viewDetails:"Bekijk details", delete:"Verwijder", confirmDelete:"Deze bewaarde meting verwijderen?",
+      measurement:"Meting", contrasts:"Contrasten", comparison:"Vergelijking", result:"Resultaat",
+      noPhoto:"Geen foto toegevoegd.", photo:"Foto", date:"Datum", lrvMeasurement:"Meting",
+      exportDate:"Exportdatum", savedCount:"Aantal bewaarde metingen", numberSurfaces:"Aantal oppervlakken",
+      photoPresent:"aanwezig", noPhotoText:"geen foto", unnamedProject:"Onbenoemd project",
+      reportBlocked:"Het rapportvenster werd door de browser geblokkeerd. Sta pop-ups toe voor deze webapp en probeer opnieuw.",
+      preparingReport:"PDF-rapport voorbereiden…", reportUpdating:"Dit venster wordt automatisch bijgewerkt.",
+      reportReady:"PDF-rapport klaar",
+      reportHint:"Op iPhone: tik op de knop en gebruik daarna de deelknop in de afdrukweergave om de PDF in Bestanden te bewaren of te delen.",
+      saveSharePdf:"Bewaar / deel als PDF",
+      fillCurrent:"Vul eerst geldige LRV-waarden in voor de huidige meting.",
+      measurementTxtDone:"Tekstbestand van de huidige meting aangemaakt.",
+      contrastMeasurement:"LRV contrastmeting", measurementFile:"meting",
+      pdfOpened:"Het PDF-rapport is geopend. Gebruik “Bewaar / deel als PDF” indien het afdrukvenster niet automatisch verschijnt.",
+      reportFailedTitle:"Rapport kon niet worden aangemaakt.", closeRetry:"Sluit dit venster en probeer opnieuw.",
+      reportFailed:"Het PDF-rapport kon niet worden aangemaakt.",
+      noSavedExport:"Er zijn nog geen bewaarde metingen om als project te exporteren.",
+      projectExportDone:"Projectexport aangemaakt met {n} bewaarde meting(en).",
+      projectReport:"LRV projectrapport", projectPdfOpened:"Het PDF-projectrapport met {n} meting(en) is geopend.",
+      projectReportFailedTitle:"Projectrapport kon niet worden aangemaakt.", projectReportFailed:"Het PDF-projectrapport kon niet worden aangemaakt.",
+      newProjectConfirm:"Nieuw project starten? Alle lokaal bewaarde metingen, gekoppelde foto's en de huidige invoer worden definitief gewist. Exporteer het project eerst als je een kopie wilt bewaren.",
+      newProjectStarted:"Nieuw leeg project gestart.",
+      clearConfirm:"Alle bewaarde metingen en gekoppelde foto's wissen? De huidige invoer blijft staan.",
+      projectExportHeading:"LRV CONTRAST — PROJECTEXPORT", measurementHeading:"METING", contrastHeading:"CONTRASTEN",
+      reportRequirement:"Vereiste: contrast ≥ 0,300"
+    },
+    fr: {
+      clientSide:"Entièrement côté client. Les mesures et les photos restent stockées localement sur cet appareil.",
+      project:"Projet", projectPlaceholder:"p. ex. Gare de Gand-Saint-Pierre",
+      location:"Point de mesure / localisation", locationPlaceholder:"p. ex. Quai 3 – escalier",
+      surfaceCount:"Nombre de surfaces", twoSurfaces:"2 surfaces", threeSurfaces:"3 surfaces",
+      formula:"Formule", conformIf:"Conforme si le contraste ≥ 0,300",
+      contrastResults:"Résultats de contraste", noResult:"Pas encore de résultat",
+      photoTitle:"Photo associée à cette mesure", photoDesc:"Vous pouvez utiliser directement l’appareil photo ou choisir une photo existante.",
+      takePhoto:"Prendre une photo", choosePhoto:"Choisir une photo", photoPreviewAlt:"Aperçu de la photo", removePhoto:"Supprimer la photo",
+      saveNext:"Enregistrer & nouvelle mesure", resetMeasurement:"Nouvelle mesure sans enregistrer",
+      projectManage:"Gestion du projet & export",
+      projectManageDesc:"Exportez d’abord votre projet si vous souhaitez conserver une copie locale. Un nouveau projet supprime toutes les mesures et photos enregistrées localement.",
+      newProject:"Nouveau projet", currentMeasurement:"Mesure actuelle",
+      currentMeasurementDesc:"Exporte les valeurs actuellement affichées, même si la mesure n’a pas encore été enregistrée.",
+      textFile:"Fichier texte", fullProject:"Projet actuel complet",
+      fullProjectDesc:"Exporte toutes les mesures enregistrées localement pour ce projet, y compris les photos associées dans le PDF.",
+      savedMeasurements:"Mesures enregistrées", historyDesc:"Touchez « Voir les détails » pour consulter les valeurs brutes, les contrastes et la photo.",
+      clearSaved:"Effacer les mesures enregistrées", localStorageLabel:"Stockage local :",
+      localStorageDesc:"si vous effacez les données de sites de Safari ou les données de la web app, les mesures et photos enregistrées localement peuvent être perdues.",
+      camera:"Appareil photo", close:"Fermer", makePhoto:"Prendre la photo", measurementDetails:"Détails de la mesure",
+      surface:"Surface", description:"Description", avg:"Moy.", average:"Moyenne",
+      invalidValue:"Valeur invalide", deleteLrv:"Supprimer LRV", addLrv:"+ Ajouter une mesure LRV",
+      conform:"CONFORME", nonConform:"NON CONFORME", waiting:"En attente",
+      fillSurfaces:"Complétez toutes les surfaces", comparisonComplete:"Comparaison terminée",
+      conformComparison:"COMPARAISON CONFORME", conformComparisons:"COMPARAISONS CONFORMES",
+      requirement:"Exigence : contraste ≥ 0,300",
+      photoProcessing:"Traitement de la photo…", photoAdded:"Photo ajoutée.", photoError:"La photo n’a pas pu être traitée.",
+      cameraHint:"Cadrez la photo puis touchez « Prendre la photo ».",
+      invalidSave:"Vérifiez que chaque surface active contient au moins une valeur LRV valide.",
+      saveFailed:"L’enregistrement a échoué.", savedNext:"Mesure enregistrée. Prêt pour la suivante.",
+      noSaved:"Aucune mesure enregistrée.", measurementSaved:"Mesure enregistrée",
+      noLocation:"Point de mesure sans nom", noProject:"Aucun projet", photoAtMeasurement:"Photo associée à la mesure",
+      viewDetails:"Voir les détails", delete:"Supprimer", confirmDelete:"Supprimer cette mesure enregistrée ?",
+      measurement:"Mesure", contrasts:"Contrastes", comparison:"Comparaison", result:"Résultat",
+      noPhoto:"Aucune photo ajoutée.", photo:"Photo", date:"Date", lrvMeasurement:"Mesure",
+      exportDate:"Date d’export", savedCount:"Nombre de mesures enregistrées", numberSurfaces:"Nombre de surfaces",
+      photoPresent:"présente", noPhotoText:"aucune photo", unnamedProject:"Projet sans nom",
+      reportBlocked:"La fenêtre du rapport a été bloquée par le navigateur. Autorisez les fenêtres contextuelles pour cette web app et réessayez.",
+      preparingReport:"Préparation du rapport PDF…", reportUpdating:"Cette fenêtre sera mise à jour automatiquement.",
+      reportReady:"Rapport PDF prêt",
+      reportHint:"Sur iPhone : touchez le bouton puis utilisez le bouton de partage dans l’aperçu d’impression pour enregistrer le PDF dans Fichiers ou le partager.",
+      saveSharePdf:"Enregistrer / partager en PDF",
+      fillCurrent:"Saisissez d’abord des valeurs LRV valides pour la mesure actuelle.",
+      measurementTxtDone:"Le fichier texte de la mesure actuelle a été créé.",
+      contrastMeasurement:"Mesure de contraste LRV", measurementFile:"mesure",
+      pdfOpened:"Le rapport PDF est ouvert. Utilisez « Enregistrer / partager en PDF » si la fenêtre d’impression ne s’affiche pas automatiquement.",
+      reportFailedTitle:"Le rapport n’a pas pu être créé.", closeRetry:"Fermez cette fenêtre et réessayez.",
+      reportFailed:"Le rapport PDF n’a pas pu être créé.",
+      noSavedExport:"Aucune mesure enregistrée n’est disponible pour exporter le projet.",
+      projectExportDone:"Export du projet créé avec {n} mesure(s) enregistrée(s).",
+      projectReport:"Rapport de projet LRV", projectPdfOpened:"Le rapport PDF du projet avec {n} mesure(s) est ouvert.",
+      projectReportFailedTitle:"Le rapport de projet n’a pas pu être créé.", projectReportFailed:"Le rapport PDF du projet n’a pas pu être créé.",
+      newProjectConfirm:"Démarrer un nouveau projet ? Toutes les mesures enregistrées localement, les photos associées et la saisie actuelle seront définitivement supprimées. Exportez d’abord le projet si vous souhaitez conserver une copie.",
+      newProjectStarted:"Nouveau projet vide démarré.",
+      clearConfirm:"Effacer toutes les mesures enregistrées et les photos associées ? La saisie actuelle sera conservée.",
+      projectExportHeading:"CONTRASTE LRV — EXPORT DU PROJET", measurementHeading:"MESURE", contrastHeading:"CONTRASTES",
+      reportRequirement:"Exigence : contraste ≥ 0,300"
+    }
+  };
+
+  let currentLang = "nl";
+
   const $ = id => document.getElementById(id);
+
+  function t(key, vars={}){
+    let value = I18N[currentLang]?.[key] ?? I18N.nl[key] ?? key;
+    for(const [k,v] of Object.entries(vars)) value = value.replaceAll(`{${k}}`, String(v));
+    return value;
+  }
+
+  function locale(){ return currentLang === "fr" ? "fr-BE" : "nl-BE"; }
+
+  function surfaceName(id){ return `${t("surface")} ${id}`; }
+
+  function isDefaultSurfaceName(name,id){
+    return name === `Oppervlak ${id}` || name === `Surface ${id}` || !String(name||"").trim();
+  }
+
+  function displaySurfaceName(name,id){
+    return isDefaultSurfaceName(name,id) ? surfaceName(id) : name;
+  }
+
+  function applyStaticTranslations(){
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{
+      const key=el.dataset.i18n;
+      if(I18N[currentLang][key] != null) el.textContent=t(key);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{
+      el.placeholder=t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll("[data-i18n-alt]").forEach(el=>{
+      el.alt=t(el.dataset.i18nAlt);
+    });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach(el=>{
+      el.setAttribute("aria-label",t(el.dataset.i18nAriaLabel));
+    });
+    $("langNl").classList.toggle("active",currentLang==="nl");
+    $("langFr").classList.toggle("active",currentLang==="fr");
+    $("langNl").setAttribute("aria-pressed",String(currentLang==="nl"));
+    $("langFr").setAttribute("aria-pressed",String(currentLang==="fr"));
+  }
+
+  async function setLanguage(lang){
+    const next = lang === "fr" ? "fr" : "nl";
+    if(next === currentLang) return;
+
+    // Alleen automatisch gegenereerde oppervlaknamen mee vertalen.
+    surfaces.forEach(s=>{
+      if(isDefaultSurfaceName(s.name,s.id)) s.name = `${next==="fr"?"Surface":"Oppervlak"} ${s.id}`;
+      s.defaultName = `${next==="fr"?"Surface":"Oppervlak"} ${s.id}`;
+    });
+
+    currentLang = next;
+    try{ localStorage.setItem("lrv-language", currentLang); }catch(e){}
+    applyStaticTranslations();
+    renderSurfaces();
+    await renderHistory();
+    $("saveMessage").textContent="";
+    $("exportMessage").textContent="";
+  }
   const surfaces = [
     { id:"A", defaultName:"Oppervlak A", name:"Oppervlak A", values:["","",""] },
     { id:"B", defaultName:"Oppervlak B", name:"Oppervlak B", values:["","",""] },
@@ -253,7 +443,7 @@
   }
 
   function fmt(n,d=2){
-    return n==null ? "—" : n.toLocaleString("nl-BE",{minimumFractionDigits:d,maximumFractionDigits:d});
+    return n==null ? "—" : n.toLocaleString(locale(),{minimumFractionDigits:d,maximumFractionDigits:d});
   }
 
   function activeSurfaces(){ return surfaces.slice(0, Number($("surfaceCount").value)); }
@@ -289,14 +479,14 @@
     activeSurfaces().forEach(s=>{
       const box=document.createElement("div");
       box.className="surface";
-      box.innerHTML=`<div class="topline"><strong>${s.defaultName}</strong><span id="avg-${s.id}" class="badge">Gem. —</span></div>`;
+      box.innerHTML=`<div class="topline"><strong>${surfaceName(s.id)}</strong><span id="avg-${s.id}" class="badge">${t("avg")} —</span></div>`;
       const label=document.createElement("label");
       label.style.marginTop="10px";
-      label.textContent="Omschrijving";
+      label.textContent=t("description");
       const ni=document.createElement("input");
-      ni.value=s.name;
-      ni.placeholder=s.defaultName;
-      ni.addEventListener("input",()=>{s.name=ni.value || s.defaultName;calculate();});
+      ni.value=displaySurfaceName(s.name,s.id);
+      ni.placeholder=surfaceName(s.id);
+      ni.addEventListener("input",()=>{s.name=ni.value || surfaceName(s.id);calculate();});
       label.appendChild(ni);
       box.appendChild(label);
 
@@ -321,7 +511,7 @@
         });
         const del=document.createElement("button");
         del.type="button"; del.className="iconbtn"; del.textContent="×"; del.disabled=s.values.length<=1;
-        del.setAttribute("aria-label",`Verwijder LRV ${i+1}`);
+        del.setAttribute("aria-label",`${t("deleteLrv")} ${i+1}`);
         del.addEventListener("click",()=>{s.values.splice(i,1);renderSurfaces();});
         row.append(input,del);list.appendChild(row);
       });
@@ -329,7 +519,7 @@
 
       const add=document.createElement("button");
       add.type="button";add.className="btn secondary wide";add.style.marginTop="10px";
-      add.textContent="+ LRV-meting toevoegen";
+      add.textContent=t("addLrv");
       add.addEventListener("click",()=>{
         s.values.push("");
         renderSurfaces();
@@ -347,7 +537,7 @@
     active.forEach(s=>{
       const a=map[s.id],el=$(`avg-${s.id}`);
       if(el){
-        el.textContent=a.invalid?"Ongeldige waarde":`Gem. ${fmt(a.average)}`;
+        el.textContent=a.invalid?t("invalidValue"):`${t("avg")} ${fmt(a.average)}`;
         el.className="badge"+(a.invalid?" bad":"");
       }
     });
@@ -368,31 +558,31 @@
       card.className="contrast "+(r?(r.pass?"good":"bad"):"");
       card.innerHTML=`
         <div class="topline"><strong>${x} ↔ ${y}</strong>
-          <span class="badge ${r?(r.pass?"good":"bad"):""}">${r?(r.pass?"CONFORM":"NIET CONFORM"):"Wachten"}</span>
+          <span class="badge ${r?(r.pass?"good":"bad"):""}">${r?(r.pass?t("conform"):t("nonConform")):t("waiting")}</span>
         </div>
         <div class="value">${r?fmt(r.contrast,3):"—"}</div>
-        <div class="small muted">Vereiste: &ge; 0,300</div>`;
+        <div class="small muted">${t("requirement")}</div>`;
       cg.appendChild(card);
     }
 
     const ob=$("overallBadge");
     if(!complete){
-      ob.textContent="Vul alle oppervlakken in";
+      ob.textContent=t("fillSurfaces");
       ob.className="badge";
     }else if(active.length===3){
       if(conformCount>0){
-        ob.textContent=`${conformCount} CONFORME VERGELIJKING${conformCount===1?"":"EN"}`;
+        ob.textContent=`${conformCount} ${conformCount===1?t("conformComparison"):t("conformComparisons")}`;
         ob.className="badge good";
       }else{
         // Neutrale melding: geen expliciete NIET-CONFORM melding bij 3 oppervlakken.
-        ob.textContent="Vergelijking voltooid";
+        ob.textContent=t("comparisonComplete");
         ob.className="badge";
       }
     }else if(allPass){
-      ob.textContent="CONFORM";
+      ob.textContent=t("conform");
       ob.className="badge good";
     }else{
-      ob.textContent="NIET CONFORM";
+      ob.textContent=t("nonConform");
       ob.className="badge bad";
     }
   }
@@ -490,12 +680,12 @@
 
   async function handlePickedFile(file){
     try{
-      $("saveMessage").textContent="Foto verwerken…";
+      $("saveMessage").textContent=t("photoProcessing");
       const blob=await imageFileToCompressedBlob(file);
       setCurrentPhoto(blob,file?.name||"foto.jpg");
-      $("saveMessage").textContent="Foto toegevoegd.";
+      $("saveMessage").textContent=t("photoAdded");
     }catch(e){
-      $("saveMessage").textContent="De foto kon niet worden verwerkt.";
+      $("saveMessage").textContent=t("photoError");
     }
   }
 
@@ -513,7 +703,7 @@
         video:{facingMode:{ideal:"environment"}},audio:false
       });
       $("cameraVideo").srcObject=cameraStream;
-      status.textContent="Richt de camera en tik op “Maak foto”.";
+      status.textContent=t("cameraHint");
       openModal(modal);
     }catch(e){
       status.textContent="";
@@ -535,7 +725,7 @@
     const blob=await canvasToCompressedBlob(canvas);
     setCurrentPhoto(blob,`LRV-${Date.now()}.jpg`);
     stopCamera();
-    $("saveMessage").textContent="Foto toegevoegd.";
+    $("saveMessage").textContent=t("photoAdded");
   }
 
   function makeRecord(){
@@ -576,14 +766,14 @@
   async function saveAndNext(){
     const record=makeRecord();
     if(!record){
-      $("saveMessage").textContent="Controleer of elk actief oppervlak minstens één geldige LRV-waarde bevat.";
+      $("saveMessage").textContent=t("invalidSave");
       return;
     }
     const ok=await putRecord(record);
-    if(!ok){$("saveMessage").textContent="Opslaan is mislukt.";return;}
+    if(!ok){$("saveMessage").textContent=t("saveFailed");return;}
     await renderHistory();
     resetMeasurement();
-    $("saveMessage").textContent="Meting bewaard. Klaar voor de volgende.";
+    $("saveMessage").textContent=t("savedNext");
   }
 
   function photoUrl(blob){
@@ -598,7 +788,7 @@
   async function renderHistory(){
     cleanupHistoryUrls();
     const records=await getRecords(),el=$("history");el.innerHTML="";
-    if(!records.length){el.innerHTML='<div class="empty">Nog geen metingen bewaard.</div>';return;}
+    if(!records.length){el.innerHTML=`<div class="empty">${t("noSaved")}</div>`;return;}
     for(const r of records){
       const shown=displayedComparisons(r);
       const allPass=(r.comparisons||[]).every(comparisonPass);
@@ -607,29 +797,29 @@
       const thumb=r.photo?photoUrl(r.photo):null;
       const comps=shown.map(c=>`${c.pair}: ${fmt(c.contrast,3)} ✓`).join(" · ");
       const statusHtml=isThree
-        ? (shown.length ? `<span class="badge good">${shown.length} CONFORM${shown.length===1?"":"E"}</span>` : `<span class="badge">Meting bewaard</span>`)
-        : `<span class="badge ${allPass?"good":"bad"}">${allPass?"CONFORM":"NIET CONFORM"}</span>`;
+        ? (shown.length ? `<span class="badge good">${shown.length} ${shown.length===1?t("conformComparison"):t("conformComparisons")}</span>` : `<span class="badge">${t("measurementSaved")}</span>`)
+        : `<span class="badge ${allPass?"good":"bad"}">${allPass?t("conform"):t("nonConform")}</span>`;
       div.innerHTML=`
         <div class="history-row">
           <div>
             <div class="topline" style="justify-content:flex-start">
-              <strong>${escapeHtml(r.location||"Meetpunt zonder naam")}</strong>
+              <strong>${escapeHtml(r.location||t("noLocation"))}</strong>
               ${statusHtml}
             </div>
-            <div class="small muted">${escapeHtml(r.project||"Geen project")} · ${new Date(r.createdAt).toLocaleString("nl-BE")}</div>
+            <div class="small muted">${escapeHtml(r.project||t("noProject"))} · ${new Date(r.createdAt).toLocaleString(locale())}</div>
             ${comps?`<div class="small" style="margin-top:6px">${escapeHtml(comps)}</div>`:""}
           </div>
-          ${thumb?`<img class="history-thumb" src="${thumb}" alt="Foto bij meting">`:""}
+          ${thumb?`<img class="history-thumb" src="${thumb}" alt="${escapeHtml(t("photoAtMeasurement"))}">`:""}
         </div>
         <div class="history-actions">
-          <button class="btn secondary detail-btn" data-id="${r.id}" type="button">Bekijk details</button>
-          <button class="btn danger delete-btn" data-id="${r.id}" type="button">Verwijder</button>
+          <button class="btn secondary detail-btn" data-id="${r.id}" type="button">${t("viewDetails")}</button>
+          <button class="btn danger delete-btn" data-id="${r.id}" type="button">${t("delete")}</button>
         </div>`;
       el.appendChild(div);
     }
     el.querySelectorAll(".detail-btn").forEach(b=>b.addEventListener("click",()=>showDetails(Number(b.dataset.id))));
     el.querySelectorAll(".delete-btn").forEach(b=>b.addEventListener("click",async()=>{
-      if(confirm("Deze bewaarde meting verwijderen?")){await deleteRecord(Number(b.dataset.id));renderHistory();}
+      if(confirm(t("confirmDelete"))){await deleteRecord(Number(b.dataset.id));renderHistory();}
     }));
   }
 
@@ -642,30 +832,30 @@
     const c=$("detailContent");
     let html=`
       <div class="card" style="margin-top:12px">
-        <strong>${escapeHtml(r.location||"Meetpunt zonder naam")}</strong>
-        <div class="small muted">${escapeHtml(r.project||"Geen project")}</div>
-        <div class="small muted">${new Date(r.createdAt).toLocaleString("nl-BE")}</div>
+        <strong>${escapeHtml(r.location||t("noLocation"))}</strong>
+        <div class="small muted">${escapeHtml(r.project||t("noProject"))}</div>
+        <div class="small muted">${new Date(r.createdAt).toLocaleString(locale())}</div>
       </div>`;
     for(const s of r.surfaces||[]){
       html+=`<div class="card">
-        <div class="topline"><h3>${escapeHtml(s.id)} — ${escapeHtml(s.name)}</h3><span class="badge">Gem. ${fmt(s.average)}</span></div>
-        <table class="details-table"><thead><tr><th>Meting</th><th>LRV</th></tr></thead><tbody>
+        <div class="topline"><h3>${escapeHtml(s.id)} — ${escapeHtml(displaySurfaceName(s.name,s.id))}</h3><span class="badge">${t("avg")} ${fmt(s.average)}</span></div>
+        <table class="details-table"><thead><tr><th>${t("measurement")}</th><th>LRV</th></tr></thead><tbody>
           ${(s.values||[]).map((v,i)=>`<tr><td>LRV ${i+1}</td><td>${fmt(v,2)}</td></tr>`).join("")}
         </tbody></table>
       </div>`;
     }
     const detailComps=displayedComparisons(r);
     if(Number(r.surfaceCount)!==3 || detailComps.length){
-      html+=`<div class="card"><h3>Contrasten</h3>
-        <table class="details-table"><thead><tr><th>Vergelijking</th><th>Contrast</th><th>Resultaat</th></tr></thead><tbody>
-        ${detailComps.map(x=>{const pass=comparisonPass(x);return `<tr><td>${escapeHtml(x.pair)}</td><td>${fmt(x.contrast,3)}</td><td><span class="badge ${pass?"good":"bad"}">${pass?"CONFORM":"NIET CONFORM"}</span></td></tr>`}).join("")}
-        </tbody></table><div class="small muted" style="margin-top:8px">Vereiste: contrast &ge; 0,300</div></div>`;
+      html+=`<div class="card"><h3>${t("contrasts")}</h3>
+        <table class="details-table"><thead><tr><th>${t("comparison")}</th><th>Contrast</th><th>${t("result")}</th></tr></thead><tbody>
+        ${detailComps.map(x=>{const pass=comparisonPass(x);return `<tr><td>${escapeHtml(x.pair)}</td><td>${fmt(x.contrast,3)}</td><td><span class="badge ${pass?"good":"bad"}">${pass?t("conform"):t("nonConform")}</span></td></tr>`}).join("")}
+        </tbody></table><div class="small muted" style="margin-top:8px">${t("requirement")}</div></div>`;
     }
     if(r.photo){
       const u=photoUrl(r.photo);
-      html+=`<div class="card"><h3>Foto</h3><img class="detail-photo" src="${u}" alt="Foto bij deze meting"></div>`;
+      html+=`<div class="card"><h3>${t("photo")}</h3><img class="detail-photo" src="${u}" alt="${escapeHtml(t("photoTitle"))}"></div>`;
     }else{
-      html+=`<div class="card"><h3>Foto</h3><div class="muted small">Geen foto toegevoegd.</div></div>`;
+      html+=`<div class="card"><h3>${t("photo")}</h3><div class="muted small">${t("noPhoto")}</div></div>`;
     }
     c.innerHTML=html;
     openModal($("detailModal"));
@@ -682,7 +872,7 @@
   }
 
   function localDateTime(iso){
-    try{return new Date(iso).toLocaleString("nl-BE");}
+    try{return new Date(iso).toLocaleString(locale());}
     catch{return String(iso||"");}
   }
 
@@ -707,53 +897,55 @@
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
 
-  function recordToText(record,heading="LRV CONTRASTMETING"){
+  function recordToText(record,heading=null){
+    const title=heading || (currentLang==="fr" ? "MESURE DE CONTRASTE LRV" : "LRV CONTRASTMETING");
     const lines=[];
-    lines.push(heading);
-    lines.push("=".repeat(heading.length));
+    lines.push(title);
+    lines.push("=".repeat(title.length));
     lines.push("");
-    lines.push(`Project: ${record.project || "—"}`);
-    lines.push(`Meetpunt / locatie: ${record.location || "—"}`);
-    lines.push(`Datum: ${localDateTime(record.createdAt)}`);
-    lines.push(`Aantal oppervlakken: ${record.surfaceCount}`);
+    lines.push(`${t("project")}: ${record.project || "—"}`);
+    lines.push(`${t("location")}: ${record.location || "—"}`);
+    lines.push(`${t("date")}: ${localDateTime(record.createdAt)}`);
+    lines.push(`${t("numberSurfaces")}: ${record.surfaceCount}`);
     lines.push("");
 
     for(const s of record.surfaces||[]){
-      lines.push(`${s.id} — ${s.name || ("Oppervlak "+s.id)}`);
+      lines.push(`${s.id} — ${displaySurfaceName(s.name,s.id)}`);
       (s.values||[]).forEach((v,i)=>lines.push(`  LRV ${i+1}: ${fmt(v,2)}`));
-      lines.push(`  Gemiddelde: ${fmt(s.average,2)}`);
+      lines.push(`  ${t("average")}: ${fmt(s.average,2)}`);
       lines.push("");
     }
 
-    lines.push("CONTRASTEN");
+    lines.push(t("contrastHeading"));
     lines.push("----------");
     for(const c of displayedComparisons(record)){
       const pass=comparisonPass(c);
-      lines.push(`${c.pair}: ${fmt(c.contrast,3)}${pass ? " — CONFORM" : " — NIET CONFORM"}`);
+      lines.push(`${c.pair}: ${fmt(c.contrast,3)}${pass ? ` — ${t("conform")}` : ` — ${t("nonConform")}`}`);
     }
-    lines.push("Vereiste: contrast >= 0,300");
-    lines.push(`Foto: ${record.photo ? (record.photoName || "aanwezig") : "geen foto"}`);
+    lines.push(t("reportRequirement"));
+    lines.push(`${t("photo")}: ${record.photo ? (record.photoName || t("photoPresent")) : t("noPhotoText")}`);
     return lines.join("\n");
   }
 
   function projectToText(records){
-    const projectName=$("project").value.trim() || records[0]?.project || "Onbenoemd project";
+    const projectName=$("project").value.trim() || records[0]?.project || t("unnamedProject");
+    const heading=t("projectExportHeading");
     const lines=[
-      "LRV CONTRAST — PROJECTEXPORT",
-      "============================",
+      heading,
+      "=".repeat(heading.length),
       "",
-      `Project: ${projectName}`,
-      `Exportdatum: ${new Date().toLocaleString("nl-BE")}`,
-      `Aantal bewaarde metingen: ${records.length}`,
+      `${t("project")}: ${projectName}`,
+      `${t("exportDate")}: ${new Date().toLocaleString(locale())}`,
+      `${t("savedCount")}: ${records.length}`,
       "",
-      "Formule: |LRV1 - LRV2| / (LRV1 + LRV2)",
-      "Vereiste: contrast >= 0,300",
+      `${t("formula")}: |LRV1 - LRV2| / (LRV1 + LRV2)`,
+      t("reportRequirement"),
       ""
     ];
     records.forEach((r,i)=>{
       lines.push("");
-      lines.push(`# METING ${i+1}`);
-      lines.push(recordToText(r,"METING"));
+      lines.push(`# ${t("measurementHeading")} ${i+1}`);
+      lines.push(recordToText(r,t("measurementHeading")));
       lines.push("");
       lines.push("-".repeat(48));
     });
@@ -765,11 +957,11 @@
     const surfaceBlocks=(record.surfaces||[]).map(s=>`
       <section class="box">
         <div class="row">
-          <h3>${escapeHtml(s.id)} — ${escapeHtml(s.name||("Oppervlak "+s.id))}</h3>
-          <strong>Gemiddelde ${fmt(s.average,2)}</strong>
+          <h3>${escapeHtml(s.id)} — ${escapeHtml(displaySurfaceName(s.name,s.id))}</h3>
+          <strong>${t("average")} ${fmt(s.average,2)}</strong>
         </div>
         <table>
-          <thead><tr><th>Meting</th><th>LRV</th></tr></thead>
+          <thead><tr><th>${t("measurement")}</th><th>LRV</th></tr></thead>
           <tbody>${(s.values||[]).map((v,i)=>`<tr><td>LRV ${i+1}</td><td>${fmt(v,2)}</td></tr>`).join("")}</tbody>
         </table>
       </section>`).join("");
@@ -779,28 +971,28 @@
       return `<tr>
         <td>${escapeHtml(c.pair)}</td>
         <td>${fmt(c.contrast,3)}</td>
-        <td class="${pass?"pass":"fail"}">${pass?"CONFORM":"NIET CONFORM"}</td>
+        <td class="${pass?"pass":"fail"}">${pass?t("conform"):t("nonConform")}</td>
       </tr>`;
     }).join("");
 
     return `
       <article class="measurement">
-        ${index!=null?`<h2>Meting ${index}</h2>`:""}
+        ${index!=null?`<h2>${t("measurement")} ${index}</h2>`:""}
         <section class="meta">
-          <div><strong>Project</strong><br>${escapeHtml(record.project||"—")}</div>
-          <div><strong>Meetpunt / locatie</strong><br>${escapeHtml(record.location||"—")}</div>
-          <div><strong>Datum</strong><br>${escapeHtml(localDateTime(record.createdAt))}</div>
+          <div><strong>${t("project")}</strong><br>${escapeHtml(record.project||"—")}</div>
+          <div><strong>${t("location")}</strong><br>${escapeHtml(record.location||"—")}</div>
+          <div><strong>${t("date")}</strong><br>${escapeHtml(localDateTime(record.createdAt))}</div>
         </section>
         <div class="surfaces">${surfaceBlocks}</div>
         ${(Number(record.surfaceCount)!==3 || contrastRows) ? `<section class="box">
-          <h3>Contrastresultaten</h3>
+          <h3>${t("contrastResults")}</h3>
           <table>
-            <thead><tr><th>Vergelijking</th><th>Contrast</th><th>Resultaat</th></tr></thead>
+            <thead><tr><th>${t("comparison")}</th><th>Contrast</th><th>${t("result")}</th></tr></thead>
             <tbody>${contrastRows}</tbody>
           </table>
-          <p class="small">Vereiste: contrast &ge; 0,300</p>
+          <p class="small">${t("reportRequirement")}</p>
         </section>` : ""}
-        ${photoData?`<section class="box photo"><h3>Foto</h3><img src="${photoData}" alt="Foto bij meting"></section>`:""}
+        ${photoData?`<section class="box photo"><h3>${t("photo")}</h3><img src="${photoData}" alt="${escapeHtml(t("photoAtMeasurement"))}"></section>`:""}
       </article>`;
   }
 
@@ -808,13 +1000,13 @@
     // Meteen openen binnen de klik-handler. Dit voorkomt pop-upblokkering in Safari/iOS.
     const w=window.open("","_blank");
     if(!w){
-      $("exportMessage").textContent="Het rapportvenster werd door de browser geblokkeerd. Sta pop-ups toe voor deze webapp en probeer opnieuw.";
+      $("exportMessage").textContent=t("reportBlocked");
       return null;
     }
     w.document.open();
-    w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title>
+    w.document.write(`<!doctype html><html lang="${currentLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title>
       <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:24px;color:#17212b}.loading{max-width:520px;margin:12vh auto;text-align:center}.spinner{width:38px;height:38px;border:4px solid #dce4ec;border-top-color:#0b5fff;border-radius:50%;margin:20px auto;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}</style>
-      </head><body><div class="loading"><h2>PDF-rapport voorbereiden…</h2><div class="spinner"></div><p>Dit venster wordt automatisch bijgewerkt.</p></div></body></html>`);
+      </head><body><div class="loading"><h2>${escapeHtml(t("preparingReport"))}</h2><div class="spinner"></div><p>${escapeHtml(t("reportUpdating"))}</p></div></body></html>`);
     w.document.close();
     return w;
   }
@@ -856,15 +1048,15 @@
       }`;
 
     w.document.open();
-    w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head>
+    w.document.write(`<!doctype html><html lang="${currentLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head>
       <body>
         <div class="toolbar">
-          <div><strong>PDF-rapport klaar</strong><div class="hint">Op iPhone: tik op de knop en gebruik daarna de deelknop in de afdrukweergave om de PDF in Bestanden te bewaren of te delen.</div></div>
-          <button type="button" onclick="window.print()">Bewaar / deel als PDF</button>
+          <div><strong>${escapeHtml(t("reportReady"))}</strong><div class="hint">${escapeHtml(t("reportHint"))}</div></div>
+          <button type="button" onclick="window.print()">${escapeHtml(t("saveSharePdf"))}</button>
         </div>
         <main class="paper">
           <h1>${escapeHtml(title)}</h1>
-          <p class="subtitle">LRV-contrast · |LRV₁ − LRV₂| / (LRV₁ + LRV₂) · vereiste &ge; 0,300</p>
+          <p class="subtitle">LRV-contrast · |LRV₁ − LRV₂| / (LRV₁ + LRV₂) · ${escapeHtml(t("reportRequirement").toLowerCase())}</p>
           ${bodyHtml}
         </main>
       </body></html>`);
@@ -881,22 +1073,22 @@
   async function exportCurrentMeasurementTxt(){
     const record=makeRecord();
     if(!record){
-      $("exportMessage").textContent="Vul eerst geldige LRV-waarden in voor de huidige meting.";
+      $("exportMessage").textContent=t("fillCurrent");
       return;
     }
     record.createdAt=new Date().toISOString();
-    const base=safeFilename(`${record.project||"LRV"}-${record.location||"meting"}`);
+    const base=safeFilename(`${record.project||"LRV"}-${record.location||t("measurementFile")}`);
     downloadText(`${base}.txt`,recordToText(record));
-    $("exportMessage").textContent="Tekstbestand van de huidige meting aangemaakt.";
+    $("exportMessage").textContent=t("measurementTxtDone");
   }
 
   async function exportCurrentMeasurementPdf(){
     const record=makeRecord();
     if(!record){
-      $("exportMessage").textContent="Vul eerst geldige LRV-waarden in voor de huidige meting.";
+      $("exportMessage").textContent=t("fillCurrent");
       return;
     }
-    const title=`LRV contrastmeting — ${record.location||record.project||"meting"}`;
+    const title=`${t("contrastMeasurement")} — ${record.location||record.project||t("measurementFile")}`;
     const w=createReportWindow(title);
     if(!w) return;
 
@@ -904,34 +1096,34 @@
       record.createdAt=new Date().toISOString();
       const body=await recordToPrintHtml(record);
       await openPrintReport(w,title,body);
-      $("exportMessage").textContent="Het PDF-rapport is geopend. Gebruik “Bewaar / deel als PDF” indien het afdrukvenster niet automatisch verschijnt.";
+      $("exportMessage").textContent=t("pdfOpened");
     }catch(e){
-      try{w.document.body.innerHTML="<h2>Rapport kon niet worden aangemaakt.</h2><p>Sluit dit venster en probeer opnieuw.</p>";}catch(_){}
-      $("exportMessage").textContent="Het PDF-rapport kon niet worden aangemaakt.";
+      try{w.document.body.innerHTML=`<h2>${escapeHtml(t("reportFailedTitle"))}</h2><p>${escapeHtml(t("closeRetry"))}</p>`;}catch(_){}
+      $("exportMessage").textContent=t("reportFailed");
     }
   }
 
   async function exportProjectTxt(){
     const records=await getRecords();
     if(!records.length){
-      $("exportMessage").textContent="Er zijn nog geen bewaarde metingen om als project te exporteren.";
+      $("exportMessage").textContent=t("noSavedExport");
       return;
     }
     const projectName=$("project").value.trim() || records[0]?.project || "LRV-project";
     downloadText(`${safeFilename(projectName)}-LRV-project.txt`,projectToText(records));
-    $("exportMessage").textContent=`Projectexport aangemaakt met ${records.length} bewaarde meting(en).`;
+    $("exportMessage").textContent=t("projectExportDone",{n:records.length});
   }
 
   async function exportProjectPdf(){
     // Open meteen binnen de gebruikersklik, vóór IndexedDB/foto-awaits.
-    const w=createReportWindow("LRV projectrapport");
+    const w=createReportWindow(t("projectReport"));
     if(!w) return;
 
     try{
       const records=await getRecords();
       if(!records.length){
         w.close();
-        $("exportMessage").textContent="Er zijn nog geen bewaarde metingen om als project te exporteren.";
+        $("exportMessage").textContent=t("noSavedExport");
         return;
       }
       let body="";
@@ -939,12 +1131,12 @@
         body+=await recordToPrintHtml(records[i],i+1);
       }
       const projectName=$("project").value.trim() || records[0]?.project || "LRV-project";
-      const title=`LRV projectrapport — ${projectName}`;
+      const title=`${t("projectReport")} — ${projectName}`;
       await openPrintReport(w,title,body);
-      $("exportMessage").textContent=`Het PDF-projectrapport met ${records.length} meting(en) is geopend.`;
+      $("exportMessage").textContent=t("projectPdfOpened",{n:records.length});
     }catch(e){
-      try{w.document.body.innerHTML="<h2>Projectrapport kon niet worden aangemaakt.</h2><p>Sluit dit venster en probeer opnieuw.</p>";}catch(_){}
-      $("exportMessage").textContent="Het PDF-projectrapport kon niet worden aangemaakt.";
+      try{w.document.body.innerHTML=`<h2>${escapeHtml(t("projectReportFailedTitle"))}</h2><p>${escapeHtml(t("closeRetry"))}</p>`;}catch(_){}
+      $("exportMessage").textContent=t("projectReportFailed");
     }
   }
 
@@ -952,7 +1144,7 @@
     const records=await getRecords();
     const hasDraft=activeSurfaces().some(s=>analysis(s).nums.length>0) || Boolean(currentPhotoBlob) || Boolean($("project").value.trim()) || Boolean($("location").value.trim());
     if(records.length || hasDraft){
-      const ok=confirm("Nieuw project starten? Alle lokaal bewaarde metingen, gekoppelde foto's en de huidige invoer worden definitief gewist. Exporteer het project eerst als je een kopie wilt bewaren.");
+      const ok=confirm(t("newProjectConfirm"));
       if(!ok) return;
     }
     await clearRecords();
@@ -961,15 +1153,19 @@
     $("location").value="";
     $("surfaceCount").value="3";
     surfaces.forEach(s=>{
-      s.name=s.defaultName;
+      s.defaultName=surfaceName(s.id);
+      s.name=surfaceName(s.id);
       s.values=["","",""];
     });
     renderSurfaces();
     await renderHistory();
     $("saveMessage").textContent="";
-    $("exportMessage").textContent="Nieuw leeg project gestart.";
+    $("exportMessage").textContent=t("newProjectStarted");
     setTimeout(()=>$("project").focus(),50);
   }
+
+  $("langNl").addEventListener("click",()=>setLanguage("nl"));
+  $("langFr").addEventListener("click",()=>setLanguage("fr"));
 
   $("surfaceCount").addEventListener("change",renderSurfaces);
   $("saveNext").addEventListener("click",saveAndNext);
@@ -997,11 +1193,22 @@
   });
 
   $("clearHistory").addEventListener("click",async()=>{
-    if(confirm("Alle bewaarde metingen en gekoppelde foto's wissen? De huidige invoer blijft staan.")){
+    if(confirm(t("clearConfirm"))){
       await clearRecords();await renderHistory();
     }
   });
 
+  try{
+    const storedLang=localStorage.getItem("lrv-language");
+    currentLang=storedLang==="fr" ? "fr" : "nl";
+  }catch(e){
+    currentLang="nl";
+  }
+  surfaces.forEach(s=>{
+    s.defaultName=surfaceName(s.id);
+    s.name=surfaceName(s.id);
+  });
+  applyStaticTranslations();
   renderSurfaces();
   openDB().then(d=>{db=d;renderHistory();});
 
