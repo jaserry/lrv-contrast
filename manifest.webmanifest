@@ -1,0 +1,9 @@
+{
+  "name": "LRV Contrast",
+  "short_name": "LRV Contrast",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#0b5fff",
+  "description": "Lokale LRV contrastmeting voor twee of drie oppervlakken."
+}

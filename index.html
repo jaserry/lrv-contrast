@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b5fff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LRV Contrast">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>LRV Contrast</title>
+  <style>
+    :root{
+      --bg:#f4f6f8;--card:#fff;--text:#16202a;--muted:#687786;--border:#dbe1e7;
+      --accent:#0b5fff;--good:#087a43;--bad:#b42318;--warn:#9a6700;--radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:920px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom))}
+    h1{font-size:1.75rem;margin:.1rem 0}
+    h2{font-size:1.15rem;margin:0}
+    h3{margin:.2rem 0 .6rem}
+    p{line-height:1.45}
+    .muted{color:var(--muted)}
+    .small{font-size:.87rem}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .grid{display:grid;gap:12px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:700px){.g2,.g3{grid-template-columns:1fr}}
+    label{display:block;font-weight:600;font-size:.92rem}
+    input,select{width:100%;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--text);padding:12px;margin-top:6px;min-height:46px}
+    input:focus,select:focus,button:focus{outline:3px solid rgba(11,95,255,.18);outline-offset:1px}
+    .surface-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    @media(max-width:800px){.surface-grid{grid-template-columns:1fr}}
+    .surface{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+    .topline,.actions,.history-head,.photo-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:.78rem;font-weight:700;background:#edf1f5;color:#455665}
+    .badge.good{background:#e8f5ee;color:var(--good)}
+    .badge.bad{background:#fdecea;color:var(--bad)}
+    .badge.warn{background:#fff4d6;color:var(--warn)}
+    .reading{display:grid;grid-template-columns:1fr 46px;gap:8px;margin-top:8px}
+    .reading input{margin:0}
+    .iconbtn{border:1px solid var(--border);border-radius:12px;background:#fff;min-height:46px}
+    .btn{border:0;border-radius:13px;padding:12px 15px;font-weight:700;min-height:46px}
+    .primary{background:var(--accent);color:#fff}
+    .secondary{background:#fff;color:var(--text);border:1px solid var(--border)}
+    .danger{background:#fff;color:var(--bad);border:1px solid #f1c7c2}
+    .wide{width:100%}
+    .contrast-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    @media(max-width:700px){.contrast-grid{grid-template-columns:1fr}}
+    .contrast{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}
+    .contrast.good{border-color:#a7d7bf}
+    .contrast.bad{border-color:#efb5ae}
+    .value{font-size:1.7rem;font-weight:800;margin:.25rem 0}
+    .photo-zone{border:1px dashed #b8c2cc;border-radius:14px;padding:12px}
+    .photo-preview{display:none;margin-top:12px}
+    .photo-preview img,.history-thumb{display:block;max-width:100%;border-radius:12px;object-fit:cover}
+    .photo-preview img{width:100%;max-height:320px}
+    .history-item{padding:14px 0;border-top:1px solid var(--border)}
+    .history-item:first-child{border-top:0;padding-top:0}
+    .history-thumb{width:78px;height:78px;border:1px solid var(--border)}
+    .history-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+    .history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .history-actions .btn{padding:9px 11px;min-height:40px}
+    .empty{padding:16px 0;color:var(--muted)}
+    .modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);z-index:50}
+    .modal.open{display:flex}
+    .sheet{width:min(100%,760px);max-height:92vh;overflow:auto;background:#fff;border-radius:20px 20px 0 0;padding:16px;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+    @media(min-width:760px){.modal{align-items:center}.sheet{border-radius:20px;max-height:88vh}}
+    .close{border:1px solid var(--border);background:#fff;border-radius:999px;width:42px;height:42px;font-size:1.2rem}
+    video{width:100%;border-radius:14px;background:#000;max-height:58vh}
+    .details-table{width:100%;border-collapse:collapse;font-size:.94rem}
+    .details-table th,.details-table td{padding:9px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+    .detail-photo{width:100%;max-height:520px;object-fit:contain;background:#f3f4f5;border-radius:14px}
+    .notice{background:#eef4ff;border:1px solid #c9dafe;border-radius:12px;padding:10px 12px}
+    .invalid{border-color:var(--bad)!important}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>LRV Contrast</h1>
+    <p class="muted small">Volledig client-side. Metingen en foto's blijven lokaal op dit toestel.</p>
+  </header>
+
+  <section class="card">
+    <div class="grid g2">
+      <label>Project
+        <input id="project" type="text" autocomplete="off" placeholder="bv. Station Gent-Sint-Pieters">
+      </label>
+      <label>Meetpunt / locatie
+        <input id="location" type="text" autocomplete="off" placeholder="bv. Perron 3 – trap">
+      </label>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <label>Aantal oppervlakken
+        <select id="surfaceCount">
+          <option value="2">2 oppervlakken</option>
+          <option value="3" selected>3 oppervlakken</option>
+        </select>
+      </label>
+      <div>
+        <div class="small muted" style="margin-top:2px">Formule</div>
+        <div style="margin-top:10px;font-weight:700">|LRV₁ − LRV₂| / (LRV₁ + LRV₂)</div>
+        <div class="small muted">Conform indien contrast &gt; 0,300</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="surfaceGrid" class="surface-grid"></section>
+
+  <section class="card">
+    <div class="topline">
+      <h2>Contrastresultaten</h2>
+      <span id="overallBadge" class="badge">Nog geen resultaat</span>
+    </div>
+    <div id="contrastGrid" class="contrast-grid" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card">
+    <h2>Foto bij deze meting</h2>
+    <p class="small muted">Je kunt rechtstreeks de camera gebruiken of een bestaande foto kiezen.</p>
+    <div class="photo-zone">
+      <div class="photo-actions">
+        <button id="openCamera" class="btn primary" type="button">📷 Foto nemen</button>
+        <button id="choosePhoto" class="btn secondary" type="button">Kies foto</button>
+      </div>
+      <input id="cameraFallback" type="file" accept="image/*" capture="environment" hidden>
+      <input id="photoPicker" type="file" accept="image/*" hidden>
+      <div id="photoPreview" class="photo-preview">
+        <img id="photoPreviewImg" alt="Voorbeeld van foto">
+        <div class="actions" style="margin-top:10px">
+          <span id="photoInfo" class="small muted"></span>
+          <button id="removePhoto" class="btn danger" type="button">Verwijder foto</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="actions">
+      <button id="saveNext" class="btn primary" type="button">Bewaar & nieuwe meting</button>
+      <button id="reset" class="btn secondary" type="button">Nieuwe meting zonder bewaren</button>
+    </div>
+    <p id="saveMessage" class="small muted" role="status" style="margin-bottom:0"></p>
+  </section>
+
+  <section class="card">
+    <div class="topline">
+      <div>
+        <h2>Projectbeheer & export</h2>
+        <p class="small muted" style="margin:.35rem 0 0">
+          Exporteer eerst je project als je een lokale kopie wilt bewaren. Een nieuw project wist alle lokaal bewaarde metingen en foto's.
+        </p>
+      </div>
+      <button id="newProject" class="btn danger" type="button">Nieuw project</button>
+    </div>
+
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card" style="margin:0">
+        <h3>Huidige meting</h3>
+        <p class="small muted">Exporteert de waarden die nu op het scherm staan, ook als ze nog niet bewaard zijn.</p>
+        <div class="actions">
+          <button id="exportMeasurementPdf" class="btn primary" type="button">PDF</button>
+          <button id="exportMeasurementTxt" class="btn secondary" type="button">Tekstbestand</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin:0">
+        <h3>Volledig huidig project</h3>
+        <p class="small muted">Exporteert alle lokaal bewaarde metingen van dit project, inclusief de gekoppelde foto's in de PDF.</p>
+        <div class="actions">
+          <button id="exportProjectPdf" class="btn primary" type="button">PDF</button>
+          <button id="exportProjectTxt" class="btn secondary" type="button">Tekstbestand</button>
+        </div>
+      </div>
+    </div>
+    <p id="exportMessage" class="small muted" role="status" style="margin-bottom:0"></p>
+  </section>
+
+  <section class="card">
+    <div class="history-head">
+      <div>
+        <h2>Bewaarde metingen</h2>
+        <div class="small muted">Tik op “Bekijk details” om ruwe waarden, contrasten en foto terug te zien.</div>
+      </div>
+      <button id="clearHistory" class="btn danger" type="button">Wis bewaarde metingen</button>
+    </div>
+    <div id="history" style="margin-top:14px"></div>
+  </section>
+
+  <section class="notice small">
+    <strong>Lokale opslag:</strong> wis je Safari-websitegegevens of verwijder je de webappgegevens, dan kunnen lokaal bewaarde metingen en foto's verloren gaan.
+  </section>
+</main>
+
+<!-- Camera -->
+<div id="cameraModal" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <div class="topline">
+      <h2>Camera</h2>
+      <button id="closeCamera" class="close" type="button" aria-label="Sluiten">×</button>
+    </div>
+    <p id="cameraStatus" class="small muted"></p>
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <canvas id="cameraCanvas" hidden></canvas>
+    <div class="actions" style="margin-top:12px">
+      <button id="takePhoto" class="btn primary wide" type="button">Maak foto</button>
+    </div>
+  </div>
+</div>
+
+<!-- Details -->
+<div id="detailModal" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <div class="topline">
+      <h2>Metingdetails</h2>
+      <button id="closeDetails" class="close" type="button" aria-label="Sluiten">×</button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const LIMIT = 0.3;
+  const DB_NAME = "lrv-contrast-db";
+  const DB_VERSION = 2;
+  const STORE = "measurements";
+
+  const $ = id => document.getElementById(id);
+  const surfaces = [
+    { id:"A", defaultName:"Oppervlak A", name:"Oppervlak A", values:["","",""] },
+    { id:"B", defaultName:"Oppervlak B", name:"Oppervlak B", values:["","",""] },
+    { id:"C", defaultName:"Oppervlak C", name:"Oppervlak C", values:["","",""] }
+  ];
+
+  let db = null;
+  let currentPhotoBlob = null;
+  let currentPhotoName = "";
+  let currentPhotoUrl = null;
+  let cameraStream = null;
+  const objectUrls = new Set();
+
+  function parseLRV(raw){
+    const s = String(raw ?? "").trim();
+    if(!s) return {empty:true, valid:true, value:null};
+    const n = Number(s.replace(",", "."));
+    return {empty:false, valid:Number.isFinite(n) && n>=0 && n<=100, value:n};
+  }
+
+  function fmt(n,d=2){
+    return n==null ? "—" : n.toLocaleString("nl-BE",{minimumFractionDigits:d,maximumFractionDigits:d});
+  }
+
+  function activeSurfaces(){ return surfaces.slice(0, Number($("surfaceCount").value)); }
+
+  function analysis(s){
+    const p = s.values.map(parseLRV);
+    const invalid = p.some(v=>!v.valid);
+    const nums = p.filter(v=>v.valid && !v.empty).map(v=>v.value);
+    return { invalid, nums, average: nums.length ? nums.reduce((a,b)=>a+b,0)/nums.length : null };
+  }
+
+  function pairsFor(count){ return count===3 ? [["A","B"],["A","C"],["B","C"]] : [["A","B"]]; }
+
+  function compare(av1,av2){
+    if(av1==null || av2==null || av1+av2===0) return null;
+    const c = Math.abs(av1-av2)/(av1+av2);
+    return {contrast:c, pass:c>LIMIT};
+  }
+
+  function renderSurfaces(){
+    const grid=$("surfaceGrid");
+    grid.innerHTML="";
+    activeSurfaces().forEach(s=>{
+      const box=document.createElement("div");
+      box.className="surface";
+      box.innerHTML=`<div class="topline"><strong>${s.defaultName}</strong><span id="avg-${s.id}" class="badge">Gem. —</span></div>`;
+      const label=document.createElement("label");
+      label.style.marginTop="10px";
+      label.textContent="Omschrijving";
+      const ni=document.createElement("input");
+      ni.value=s.name;
+      ni.placeholder=s.defaultName;
+      ni.addEventListener("input",()=>{s.name=ni.value || s.defaultName;calculate();});
+      label.appendChild(ni);
+      box.appendChild(label);
+
+      const list=document.createElement("div");
+      s.values.forEach((v,i)=>{
+        const row=document.createElement("div");
+        row.className="reading";
+        const input=document.createElement("input");
+        input.type="text"; input.inputMode="decimal"; input.value=v; input.placeholder=`LRV ${i+1}`;
+        input.setAttribute("aria-label",`${s.id}-LRV-${i+1}`);
+        const check=()=>input.classList.toggle("invalid",!parseLRV(input.value).valid);
+        input.addEventListener("input",()=>{s.values[i]=input.value;check();calculate();});
+        input.addEventListener("keydown",e=>{
+          if(e.key==="Enter"){
+            e.preventDefault();
+            if(i===s.values.length-1){
+              s.values.push("");
+              renderSurfaces();
+              document.querySelector(`[aria-label="${s.id}-LRV-${s.values.length}"]`)?.focus();
+            }
+          }
+        });
+        const del=document.createElement("button");
+        del.type="button"; del.className="iconbtn"; del.textContent="×"; del.disabled=s.values.length<=1;
+        del.setAttribute("aria-label",`Verwijder LRV ${i+1}`);
+        del.addEventListener("click",()=>{s.values.splice(i,1);renderSurfaces();});
+        row.append(input,del);list.appendChild(row);
+      });
+      box.appendChild(list);
+
+      const add=document.createElement("button");
+      add.type="button";add.className="btn secondary wide";add.style.marginTop="10px";
+      add.textContent="+ LRV-meting toevoegen";
+      add.addEventListener("click",()=>{
+        s.values.push("");
+        renderSurfaces();
+        document.querySelector(`[aria-label="${s.id}-LRV-${s.values.length}"]`)?.focus();
+      });
+      box.appendChild(add);
+      grid.appendChild(box);
+    });
+    calculate();
+  }
+
+  function calculate(){
+    const active=activeSurfaces();
+    const map=Object.fromEntries(active.map(s=>[s.id,analysis(s)]));
+    active.forEach(s=>{
+      const a=map[s.id],el=$(`avg-${s.id}`);
+      if(el){
+        el.textContent=a.invalid?"Ongeldige waarde":`Gem. ${fmt(a.average)}`;
+        el.className="badge"+(a.invalid?" bad":"");
+      }
+    });
+
+    const cg=$("contrastGrid");cg.innerHTML="";
+    let complete=true, allPass=true;
+    for(const [x,y] of pairsFor(active.length)){
+      const r=compare(map[x]?.average,map[y]?.average);
+      if(map[x]?.invalid||map[y]?.invalid||!r) complete=false;
+      if(r && !r.pass) allPass=false;
+      const card=document.createElement("div");
+      card.className="contrast "+(r?(r.pass?"good":"bad"):"");
+      card.innerHTML=`
+        <div class="topline"><strong>${x} ↔ ${y}</strong>
+          <span class="badge ${r?(r.pass?"good":"bad"):""}">${r?(r.pass?"CONFORM":"NIET CONFORM"):"Wachten"}</span>
+        </div>
+        <div class="value">${r?fmt(r.contrast,3):"—"}</div>
+        <div class="small muted">Vereiste: &gt; 0,300</div>`;
+      cg.appendChild(card);
+    }
+    const ob=$("overallBadge");
+    if(!complete){ob.textContent="Vul alle oppervlakken in";ob.className="badge";}
+    else if(allPass){ob.textContent="ALLE CONTRASTEN CONFORM";ob.className="badge good";}
+    else{ob.textContent="MINSTENS ÉÉN NIET CONFORM";ob.className="badge bad";}
+  }
+
+  async function openDB(){
+    return new Promise(resolve=>{
+      if(!("indexedDB" in window)) return resolve(null);
+      const req=indexedDB.open(DB_NAME,DB_VERSION);
+      req.onupgradeneeded=()=>{
+        const d=req.result;
+        if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE,{keyPath:"id"});
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>resolve(null);
+    });
+  }
+
+  function txStore(mode){ return db.transaction(STORE,mode).objectStore(STORE); }
+
+  function putRecord(record){
+    return new Promise(resolve=>{
+      if(!db) return resolve(false);
+      const req=txStore("readwrite").put(record);
+      req.onsuccess=()=>resolve(true); req.onerror=()=>resolve(false);
+    });
+  }
+
+  function getRecords(){
+    return new Promise(resolve=>{
+      if(!db) return resolve([]);
+      const req=txStore("readonly").getAll();
+      req.onsuccess=()=>resolve(req.result.sort((a,b)=>b.id-a.id));
+      req.onerror=()=>resolve([]);
+    });
+  }
+
+  function getRecord(id){
+    return new Promise(resolve=>{
+      if(!db) return resolve(null);
+      const req=txStore("readonly").get(id);
+      req.onsuccess=()=>resolve(req.result||null); req.onerror=()=>resolve(null);
+    });
+  }
+
+  function deleteRecord(id){
+    return new Promise(resolve=>{
+      if(!db) return resolve(false);
+      const req=txStore("readwrite").delete(id);
+      req.onsuccess=()=>resolve(true);req.onerror=()=>resolve(false);
+    });
+  }
+
+  function clearRecords(){
+    return new Promise(resolve=>{
+      if(!db) return resolve(false);
+      const req=txStore("readwrite").clear();
+      req.onsuccess=()=>resolve(true);req.onerror=()=>resolve(false);
+    });
+  }
+
+  async function imageFileToCompressedBlob(file,maxDim=1600,quality=.80){
+    if(!file) return null;
+    const bitmap=await createImageBitmap(file);
+    let w=bitmap.width,h=bitmap.height;
+    const scale=Math.min(1,maxDim/Math.max(w,h));
+    w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));
+    const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+    canvas.getContext("2d").drawImage(bitmap,0,0,w,h);
+    bitmap.close?.();
+    return await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
+  }
+
+  async function canvasToCompressedBlob(canvas,maxDim=1600,quality=.80){
+    const scale=Math.min(1,maxDim/Math.max(canvas.width,canvas.height));
+    const out=document.createElement("canvas");
+    out.width=Math.round(canvas.width*scale);out.height=Math.round(canvas.height*scale);
+    out.getContext("2d").drawImage(canvas,0,0,out.width,out.height);
+    return await new Promise(resolve=>out.toBlob(resolve,"image/jpeg",quality));
+  }
+
+  function setCurrentPhoto(blob,name="foto.jpg"){
+    if(currentPhotoUrl){URL.revokeObjectURL(currentPhotoUrl);currentPhotoUrl=null;}
+    currentPhotoBlob=blob;currentPhotoName=name;
+    if(blob){
+      currentPhotoUrl=URL.createObjectURL(blob);
+      $("photoPreviewImg").src=currentPhotoUrl;
+      $("photoPreview").style.display="block";
+      $("photoInfo").textContent=`${Math.max(1,Math.round(blob.size/1024))} KB`;
+    }else{
+      $("photoPreviewImg").removeAttribute("src");
+      $("photoPreview").style.display="none";
+      $("photoInfo").textContent="";
+    }
+  }
+
+  async function handlePickedFile(file){
+    try{
+      $("saveMessage").textContent="Foto verwerken…";
+      const blob=await imageFileToCompressedBlob(file);
+      setCurrentPhoto(blob,file?.name||"foto.jpg");
+      $("saveMessage").textContent="Foto toegevoegd.";
+    }catch(e){
+      $("saveMessage").textContent="De foto kon niet worden verwerkt.";
+    }
+  }
+
+  function openModal(el){el.classList.add("open");el.setAttribute("aria-hidden","false");}
+  function closeModal(el){el.classList.remove("open");el.setAttribute("aria-hidden","true");}
+
+  async function startCamera(){
+    const modal=$("cameraModal"),status=$("cameraStatus");
+    if(!navigator.mediaDevices?.getUserMedia){
+      $("cameraFallback").click();
+      return;
+    }
+    try{
+      cameraStream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:"environment"}},audio:false
+      });
+      $("cameraVideo").srcObject=cameraStream;
+      status.textContent="Richt de camera en tik op “Maak foto”.";
+      openModal(modal);
+    }catch(e){
+      status.textContent="";
+      $("cameraFallback").click();
+    }
+  }
+
+  function stopCamera(){
+    if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
+    $("cameraVideo").srcObject=null;
+    closeModal($("cameraModal"));
+  }
+
+  async function capturePhoto(){
+    const video=$("cameraVideo"),canvas=$("cameraCanvas");
+    if(!video.videoWidth) return;
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    canvas.getContext("2d").drawImage(video,0,0);
+    const blob=await canvasToCompressedBlob(canvas);
+    setCurrentPhoto(blob,`LRV-${Date.now()}.jpg`);
+    stopCamera();
+    $("saveMessage").textContent="Foto toegevoegd.";
+  }
+
+  function makeRecord(){
+    const active=activeSurfaces();
+    const analysed=active.map(s=>({s,a:analysis(s)}));
+    if(analysed.some(x=>x.a.invalid||x.a.average==null)) return null;
+    const comps=pairsFor(active.length).map(([x,y])=>{
+      const ax=analysed.find(z=>z.s.id===x).a.average;
+      const ay=analysed.find(z=>z.s.id===y).a.average;
+      const r=compare(ax,ay);
+      return r?{pair:`${x}-${y}`,from:x,to:y,contrast:r.contrast,pass:r.pass}:null;
+    });
+    if(comps.some(x=>!x)) return null;
+    return {
+      id:Date.now(),
+      createdAt:new Date().toISOString(),
+      project:$("project").value.trim(),
+      location:$("location").value.trim(),
+      surfaceCount:active.length,
+      surfaces:analysed.map(({s,a})=>({
+        id:s.id,name:s.name||s.defaultName,values:a.nums,average:a.average
+      })),
+      comparisons:comps,
+      photo:currentPhotoBlob||null,
+      photoName:currentPhotoName||null
+    };
+  }
+
+  function resetMeasurement(){
+    surfaces.forEach(s=>{s.values=["","",""];});
+    $("location").value="";
+    setCurrentPhoto(null);
+    $("saveMessage").textContent="";
+    renderSurfaces();
+    setTimeout(()=>document.querySelector('[aria-label="A-LRV-1"]')?.focus(),50);
+  }
+
+  async function saveAndNext(){
+    const record=makeRecord();
+    if(!record){
+      $("saveMessage").textContent="Controleer of elk actief oppervlak minstens één geldige LRV-waarde bevat.";
+      return;
+    }
+    const ok=await putRecord(record);
+    if(!ok){$("saveMessage").textContent="Opslaan is mislukt.";return;}
+    await renderHistory();
+    resetMeasurement();
+    $("saveMessage").textContent="Meting bewaard. Klaar voor de volgende.";
+  }
+
+  function photoUrl(blob){
+    if(!blob) return null;
+    const u=URL.createObjectURL(blob);objectUrls.add(u);return u;
+  }
+  function cleanupHistoryUrls(){
+    for(const u of objectUrls) URL.revokeObjectURL(u);
+    objectUrls.clear();
+  }
+
+  async function renderHistory(){
+    cleanupHistoryUrls();
+    const records=await getRecords(),el=$("history");el.innerHTML="";
+    if(!records.length){el.innerHTML='<div class="empty">Nog geen metingen bewaard.</div>';return;}
+    for(const r of records){
+      const allPass=r.comparisons?.every(c=>c.pass);
+      const div=document.createElement("div");div.className="history-item";
+      const thumb=r.photo?photoUrl(r.photo):null;
+      const comps=(r.comparisons||[]).map(c=>`${c.pair}: ${fmt(c.contrast,3)}`).join(" · ");
+      div.innerHTML=`
+        <div class="history-row">
+          <div>
+            <div class="topline" style="justify-content:flex-start">
+              <strong>${escapeHtml(r.location||"Meetpunt zonder naam")}</strong>
+              <span class="badge ${allPass?"good":"bad"}">${allPass?"CONFORM":"NIET CONFORM"}</span>
+            </div>
+            <div class="small muted">${escapeHtml(r.project||"Geen project")} · ${new Date(r.createdAt).toLocaleString("nl-BE")}</div>
+            <div class="small" style="margin-top:6px">${escapeHtml(comps)}</div>
+          </div>
+          ${thumb?`<img class="history-thumb" src="${thumb}" alt="Foto bij meting">`:""}
+        </div>
+        <div class="history-actions">
+          <button class="btn secondary detail-btn" data-id="${r.id}" type="button">Bekijk details</button>
+          <button class="btn danger delete-btn" data-id="${r.id}" type="button">Verwijder</button>
+        </div>`;
+      el.appendChild(div);
+    }
+    el.querySelectorAll(".detail-btn").forEach(b=>b.addEventListener("click",()=>showDetails(Number(b.dataset.id))));
+    el.querySelectorAll(".delete-btn").forEach(b=>b.addEventListener("click",async()=>{
+      if(confirm("Deze bewaarde meting verwijderen?")){await deleteRecord(Number(b.dataset.id));renderHistory();}
+    }));
+  }
+
+  function escapeHtml(s){
+    return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  }
+
+  async function showDetails(id){
+    const r=await getRecord(id);if(!r)return;
+    const c=$("detailContent");
+    let html=`
+      <div class="card" style="margin-top:12px">
+        <strong>${escapeHtml(r.location||"Meetpunt zonder naam")}</strong>
+        <div class="small muted">${escapeHtml(r.project||"Geen project")}</div>
+        <div class="small muted">${new Date(r.createdAt).toLocaleString("nl-BE")}</div>
+      </div>`;
+    for(const s of r.surfaces||[]){
+      html+=`<div class="card">
+        <div class="topline"><h3>${escapeHtml(s.id)} — ${escapeHtml(s.name)}</h3><span class="badge">Gem. ${fmt(s.average)}</span></div>
+        <table class="details-table"><thead><tr><th>Meting</th><th>LRV</th></tr></thead><tbody>
+          ${(s.values||[]).map((v,i)=>`<tr><td>LRV ${i+1}</td><td>${fmt(v,2)}</td></tr>`).join("")}
+        </tbody></table>
+      </div>`;
+    }
+    html+=`<div class="card"><h3>Contrasten</h3>
+      <table class="details-table"><thead><tr><th>Vergelijking</th><th>Contrast</th><th>Resultaat</th></tr></thead><tbody>
+      ${(r.comparisons||[]).map(x=>`<tr><td>${escapeHtml(x.pair)}</td><td>${fmt(x.contrast,3)}</td><td><span class="badge ${x.pass?"good":"bad"}">${x.pass?"CONFORM":"NIET CONFORM"}</span></td></tr>`).join("")}
+      </tbody></table><div class="small muted" style="margin-top:8px">Vereiste: contrast &gt; 0,300</div></div>`;
+    if(r.photo){
+      const u=photoUrl(r.photo);
+      html+=`<div class="card"><h3>Foto</h3><img class="detail-photo" src="${u}" alt="Foto bij deze meting"></div>`;
+    }else{
+      html+=`<div class="card"><h3>Foto</h3><div class="muted small">Geen foto toegevoegd.</div></div>`;
+    }
+    c.innerHTML=html;
+    openModal($("detailModal"));
+  }
+
+
+  function safeFilename(text, fallback="LRV-export"){
+    const s=String(text||fallback)
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-zA-Z0-9._-]+/g,"-")
+      .replace(/^-+|-+$/g,"")
+      .slice(0,80);
+    return s || fallback;
+  }
+
+  function localDateTime(iso){
+    try{return new Date(iso).toLocaleString("nl-BE");}
+    catch{return String(iso||"");}
+  }
+
+  function dataUrlFromBlob(blob){
+    return new Promise((resolve,reject)=>{
+      if(!blob) return resolve(null);
+      const reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);
+      reader.onerror=()=>reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function downloadText(filename,text){
+    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+
+  function recordToText(record,heading="LRV CONTRASTMETING"){
+    const lines=[];
+    lines.push(heading);
+    lines.push("=".repeat(heading.length));
+    lines.push("");
+    lines.push(`Project: ${record.project || "—"}`);
+    lines.push(`Meetpunt / locatie: ${record.location || "—"}`);
+    lines.push(`Datum: ${localDateTime(record.createdAt)}`);
+    lines.push(`Aantal oppervlakken: ${record.surfaceCount}`);
+    lines.push("");
+
+    for(const s of record.surfaces||[]){
+      lines.push(`${s.id} — ${s.name || ("Oppervlak "+s.id)}`);
+      (s.values||[]).forEach((v,i)=>lines.push(`  LRV ${i+1}: ${fmt(v,2)}`));
+      lines.push(`  Gemiddelde: ${fmt(s.average,2)}`);
+      lines.push("");
+    }
+
+    lines.push("CONTRASTEN");
+    lines.push("----------");
+    for(const c of record.comparisons||[]){
+      lines.push(`${c.pair}: ${fmt(c.contrast,3)} — ${c.pass ? "CONFORM" : "NIET CONFORM"}`);
+    }
+    lines.push("Vereiste: contrast > 0,300");
+    lines.push(`Foto: ${record.photo ? (record.photoName || "aanwezig") : "geen foto"}`);
+    return lines.join("\n");
+  }
+
+  function projectToText(records){
+    const projectName=$("project").value.trim() || records[0]?.project || "Onbenoemd project";
+    const lines=[
+      "LRV CONTRAST — PROJECTEXPORT",
+      "============================",
+      "",
+      `Project: ${projectName}`,
+      `Exportdatum: ${new Date().toLocaleString("nl-BE")}`,
+      `Aantal bewaarde metingen: ${records.length}`,
+      "",
+      "Formule: |LRV1 - LRV2| / (LRV1 + LRV2)",
+      "Vereiste: contrast > 0,300",
+      ""
+    ];
+    records.forEach((r,i)=>{
+      lines.push("");
+      lines.push(`# METING ${i+1}`);
+      lines.push(recordToText(r,"METING"));
+      lines.push("");
+      lines.push("-".repeat(48));
+    });
+    return lines.join("\n");
+  }
+
+  async function recordToPrintHtml(record,index=null){
+    const photoData=record.photo ? await dataUrlFromBlob(record.photo) : null;
+    const surfaceBlocks=(record.surfaces||[]).map(s=>`
+      <section class="box">
+        <div class="row">
+          <h3>${escapeHtml(s.id)} — ${escapeHtml(s.name||("Oppervlak "+s.id))}</h3>
+          <strong>Gemiddelde ${fmt(s.average,2)}</strong>
+        </div>
+        <table>
+          <thead><tr><th>Meting</th><th>LRV</th></tr></thead>
+          <tbody>${(s.values||[]).map((v,i)=>`<tr><td>LRV ${i+1}</td><td>${fmt(v,2)}</td></tr>`).join("")}</tbody>
+        </table>
+      </section>`).join("");
+
+    const contrastRows=(record.comparisons||[]).map(c=>`
+      <tr>
+        <td>${escapeHtml(c.pair)}</td>
+        <td>${fmt(c.contrast,3)}</td>
+        <td class="${c.pass?"pass":"fail"}">${c.pass?"CONFORM":"NIET CONFORM"}</td>
+      </tr>`).join("");
+
+    return `
+      <article class="measurement">
+        ${index!=null?`<h2>Meting ${index}</h2>`:""}
+        <section class="meta">
+          <div><strong>Project</strong><br>${escapeHtml(record.project||"—")}</div>
+          <div><strong>Meetpunt / locatie</strong><br>${escapeHtml(record.location||"—")}</div>
+          <div><strong>Datum</strong><br>${escapeHtml(localDateTime(record.createdAt))}</div>
+        </section>
+        <div class="surfaces">${surfaceBlocks}</div>
+        <section class="box">
+          <h3>Contrastresultaten</h3>
+          <table>
+            <thead><tr><th>Vergelijking</th><th>Contrast</th><th>Resultaat</th></tr></thead>
+            <tbody>${contrastRows}</tbody>
+          </table>
+          <p class="small">Vereiste: contrast &gt; 0,300</p>
+        </section>
+        ${photoData?`<section class="box photo"><h3>Foto</h3><img src="${photoData}" alt="Foto bij meting"></section>`:""}
+      </article>`;
+  }
+
+  async function openPrintReport(title,bodyHtml){
+    const css=`
+      *{box-sizing:border-box}
+      body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#17212b;margin:24px;font-size:11pt}
+      h1{font-size:20pt;margin:0 0 5px}
+      h2{font-size:15pt;margin:18px 0 10px}
+      h3{font-size:11.5pt;margin:0 0 8px}
+      .subtitle{color:#667685;margin:0 0 18px}
+      .measurement{break-after:page}
+      .measurement:last-child{break-after:auto}
+      .meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+      .box{border:1px solid #d9e0e6;border-radius:10px;padding:12px;margin:10px 0;break-inside:avoid}
+      .surfaces{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+      .row{display:flex;justify-content:space-between;gap:12px;align-items:start}
+      table{width:100%;border-collapse:collapse}
+      th,td{text-align:left;padding:6px;border-bottom:1px solid #e3e7eb}
+      th{font-size:9.5pt;color:#52616f}
+      .pass{font-weight:700;color:#087a43}
+      .fail{font-weight:700;color:#b42318}
+      .small{font-size:9.5pt;color:#667685}
+      .photo img{max-width:100%;max-height:520px;object-fit:contain}
+      @media(max-width:700px){.meta,.surfaces{grid-template-columns:1fr}}
+      @media print{
+        @page{size:auto;margin:12mm}
+        body{margin:0}
+        .measurement{break-after:page}
+        .measurement:last-child{break-after:auto}
+      }`;
+    const w=window.open("","_blank");
+    if(!w){
+      $("exportMessage").textContent="De PDF-weergave kon niet worden geopend. Controleer of pop-ups voor deze webapp zijn toegestaan.";
+      return;
+    }
+    w.document.open();
+    w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head><body><h1>${escapeHtml(title)}</h1><p class="subtitle">LRV-contrast · |LRV₁ − LRV₂| / (LRV₁ + LRV₂) · vereiste &gt; 0,300</p>${bodyHtml}</body></html>`);
+    w.document.close();
+
+    // Wacht op lokaal ingebedde foto's voordat de printdialoog opent.
+    const images=[...w.document.images];
+    await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=res;img.onerror=res;})));
+    setTimeout(()=>{w.focus();w.print();},250);
+  }
+
+  async function exportCurrentMeasurementTxt(){
+    const record=makeRecord();
+    if(!record){
+      $("exportMessage").textContent="Vul eerst geldige LRV-waarden in voor de huidige meting.";
+      return;
+    }
+    record.createdAt=new Date().toISOString();
+    const base=safeFilename(`${record.project||"LRV"}-${record.location||"meting"}`);
+    downloadText(`${base}.txt`,recordToText(record));
+    $("exportMessage").textContent="Tekstbestand van de huidige meting aangemaakt.";
+  }
+
+  async function exportCurrentMeasurementPdf(){
+    const record=makeRecord();
+    if(!record){
+      $("exportMessage").textContent="Vul eerst geldige LRV-waarden in voor de huidige meting.";
+      return;
+    }
+    record.createdAt=new Date().toISOString();
+    const body=await recordToPrintHtml(record);
+    await openPrintReport(`LRV contrastmeting — ${record.location||record.project||"meting"}`,body);
+    $("exportMessage").textContent="PDF-weergave geopend. Kies in het afdruk-/deelmenu voor bewaren of delen als PDF.";
+  }
+
+  async function exportProjectTxt(){
+    const records=await getRecords();
+    if(!records.length){
+      $("exportMessage").textContent="Er zijn nog geen bewaarde metingen om als project te exporteren.";
+      return;
+    }
+    const projectName=$("project").value.trim() || records[0]?.project || "LRV-project";
+    downloadText(`${safeFilename(projectName)}-LRV-project.txt`,projectToText(records));
+    $("exportMessage").textContent=`Projectexport aangemaakt met ${records.length} bewaarde meting(en).`;
+  }
+
+  async function exportProjectPdf(){
+    const records=await getRecords();
+    if(!records.length){
+      $("exportMessage").textContent="Er zijn nog geen bewaarde metingen om als project te exporteren.";
+      return;
+    }
+    let body="";
+    for(let i=0;i<records.length;i++){
+      body+=await recordToPrintHtml(records[i],i+1);
+    }
+    const projectName=$("project").value.trim() || records[0]?.project || "LRV-project";
+    await openPrintReport(`LRV projectrapport — ${projectName}`,body);
+    $("exportMessage").textContent=`PDF-weergave geopend voor ${records.length} bewaarde meting(en).`;
+  }
+
+  async function startNewProject(){
+    const records=await getRecords();
+    const hasDraft=activeSurfaces().some(s=>analysis(s).nums.length>0) || Boolean(currentPhotoBlob) || Boolean($("project").value.trim()) || Boolean($("location").value.trim());
+    if(records.length || hasDraft){
+      const ok=confirm("Nieuw project starten? Alle lokaal bewaarde metingen, gekoppelde foto's en de huidige invoer worden definitief gewist. Exporteer het project eerst als je een kopie wilt bewaren.");
+      if(!ok) return;
+    }
+    await clearRecords();
+    setCurrentPhoto(null);
+    $("project").value="";
+    $("location").value="";
+    $("surfaceCount").value="3";
+    surfaces.forEach(s=>{
+      s.name=s.defaultName;
+      s.values=["","",""];
+    });
+    renderSurfaces();
+    await renderHistory();
+    $("saveMessage").textContent="";
+    $("exportMessage").textContent="Nieuw leeg project gestart.";
+    setTimeout(()=>$("project").focus(),50);
+  }
+
+  $("surfaceCount").addEventListener("change",renderSurfaces);
+  $("saveNext").addEventListener("click",saveAndNext);
+  $("reset").addEventListener("click",resetMeasurement);
+
+  $("newProject").addEventListener("click",startNewProject);
+  $("exportMeasurementPdf").addEventListener("click",exportCurrentMeasurementPdf);
+  $("exportMeasurementTxt").addEventListener("click",exportCurrentMeasurementTxt);
+  $("exportProjectPdf").addEventListener("click",exportProjectPdf);
+  $("exportProjectTxt").addEventListener("click",exportProjectTxt);
+
+  $("openCamera").addEventListener("click",startCamera);
+  $("closeCamera").addEventListener("click",stopCamera);
+  $("takePhoto").addEventListener("click",capturePhoto);
+  $("cameraFallback").addEventListener("change",e=>{if(e.target.files?.[0])handlePickedFile(e.target.files[0]);e.target.value="";});
+  $("choosePhoto").addEventListener("click",()=>$("photoPicker").click());
+  $("photoPicker").addEventListener("change",e=>{if(e.target.files?.[0])handlePickedFile(e.target.files[0]);e.target.value="";});
+  $("removePhoto").addEventListener("click",()=>setCurrentPhoto(null));
+
+  $("closeDetails").addEventListener("click",()=>closeModal($("detailModal")));
+  $("detailModal").addEventListener("click",e=>{if(e.target===$("detailModal"))closeModal($("detailModal"));});
+  $("cameraModal").addEventListener("click",e=>{if(e.target===$("cameraModal"))stopCamera();});
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"){stopCamera();closeModal($("detailModal"));}
+  });
+
+  $("clearHistory").addEventListener("click",async()=>{
+    if(confirm("Alle bewaarde metingen en gekoppelde foto's wissen? De huidige invoer blijft staan.")){
+      await clearRecords();await renderHistory();
+    }
+  });
+
+  renderSurfaces();
+  openDB().then(d=>{db=d;renderHistory();});
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>
