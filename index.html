@@ -108,8 +108,8 @@
     <div class="grid g2" style="margin-top:12px">
       <label><span data-i18n="surfaceCount">Aantal oppervlakken</span>
         <select id="surfaceCount">
-          <option value="2" data-i18n="twoSurfaces">2 oppervlakken</option>
-          <option value="3" selected data-i18n="threeSurfaces">3 oppervlakken</option>
+          <option value="2" selected data-i18n="twoSurfaces">2 oppervlakken</option>
+          <option value="3" data-i18n="threeSurfaces">3 oppervlakken</option>
         </select>
       </label>
       <div>
@@ -1151,7 +1151,7 @@
     setCurrentPhoto(null);
     $("project").value="";
     $("location").value="";
-    $("surfaceCount").value="3";
+    $("surfaceCount").value="2";
     surfaces.forEach(s=>{
       s.defaultName=surfaceName(s.id);
       s.name=surfaceName(s.id);
