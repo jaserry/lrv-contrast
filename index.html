@@ -169,16 +169,7 @@
       <button id="newProject" class="btn danger" type="button" data-i18n="newProject">Nieuw project</button>
     </div>
 
-    <div class="grid g2" style="margin-top:14px">
-      <div class="card" style="margin:0">
-        <h3 data-i18n="currentMeasurement">Huidige meting</h3>
-        <p class="small muted" data-i18n="currentMeasurementDesc">Exporteert de waarden die nu op het scherm staan, ook als ze nog niet bewaard zijn.</p>
-        <div class="actions">
-          <button id="exportMeasurementPdf" class="btn primary" type="button">PDF</button>
-          <button id="exportMeasurementTxt" class="btn secondary" type="button" data-i18n="textFile">Tekstbestand</button>
-        </div>
-      </div>
-
+    <div style="margin-top:14px">
       <div class="card" style="margin:0">
         <h3 data-i18n="fullProject">Volledig huidig project</h3>
         <p class="small muted" data-i18n="fullProjectDesc">Exporteert alle lokaal bewaarde metingen van dit project, inclusief de gekoppelde foto's in de PDF.</p>
@@ -235,6 +226,28 @@
   </div>
 </div>
 
+
+<!-- Bewerken / Modifier -->
+<div id="editModal" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <div class="topline">
+      <h2 data-i18n="editMeasurement">Bewaarde meting bewerken</h2>
+      <button id="closeEdit" class="close" type="button" aria-label="Sluiten" data-i18n-aria-label="close">×</button>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <label><span data-i18n="location">Meetpunt / locatie</span>
+        <input id="editLocation" type="text" autocomplete="off">
+      </label>
+    </div>
+    <div id="editSurfaces"></div>
+    <p id="editMessage" class="small muted" role="status"></p>
+    <div class="actions">
+      <button id="saveEdit" class="btn primary" type="button" data-i18n="saveChanges">Wijzigingen opslaan</button>
+      <button id="cancelEdit" class="btn secondary" type="button" data-i18n="cancel">Annuleren</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
   const LIMIT = 0.3;
@@ -263,6 +276,11 @@
       clearSaved:"Wis bewaarde metingen", localStorageLabel:"Lokale opslag:",
       localStorageDesc:"wis je Safari-websitegegevens of verwijder je de webappgegevens, dan kunnen lokaal bewaarde metingen en foto's verloren gaan.",
       camera:"Camera", close:"Sluiten", makePhoto:"Maak foto", measurementDetails:"Metingdetails",
+      editMeasurement:"Bewaarde meting bewerken", edit:"Bewerken", saveChanges:"Wijzigingen opslaan", cancel:"Annuleren",
+      requiredProject:"Vul eerst een projectnaam in.", requiredLocation:"Vul eerst een meetpunt / locatie in.",
+      requiredProjectLocation:"Vul eerst een projectnaam en meetpunt / locatie in.",
+      editLocationRequired:"Het meetpunt / de locatie mag niet leeg zijn.", editSaved:"Wijzigingen opgeslagen.",
+      pdfOpening:"PDF wordt geopend…", pdfOpenedSimple:"PDF geopend in een nieuw venster.",
       surface:"Oppervlak", description:"Omschrijving", avg:"Gem.", average:"Gemiddelde",
       invalidValue:"Ongeldige waarde", deleteLrv:"Verwijder LRV", addLrv:"+ LRV-meting toevoegen",
       conform:"CONFORM", nonConform:"NIET CONFORM", waiting:"Wachten",
@@ -321,6 +339,11 @@
       clearSaved:"Effacer les mesures enregistrées", localStorageLabel:"Stockage local :",
       localStorageDesc:"si vous effacez les données de sites de Safari ou les données de la web app, les mesures et photos enregistrées localement peuvent être perdues.",
       camera:"Appareil photo", close:"Fermer", makePhoto:"Prendre la photo", measurementDetails:"Détails de la mesure",
+      editMeasurement:"Modifier une mesure enregistrée", edit:"Modifier", saveChanges:"Enregistrer les modifications", cancel:"Annuler",
+      requiredProject:"Saisissez d’abord un nom de projet.", requiredLocation:"Saisissez d’abord un point de mesure / une localisation.",
+      requiredProjectLocation:"Saisissez d’abord un nom de projet et un point de mesure / une localisation.",
+      editLocationRequired:"Le point de mesure / la localisation ne peut pas être vide.", editSaved:"Modifications enregistrées.",
+      pdfOpening:"Ouverture du PDF…", pdfOpenedSimple:"PDF ouvert dans une nouvelle fenêtre.",
       surface:"Surface", description:"Description", avg:"Moy.", average:"Moyenne",
       invalidValue:"Valeur invalide", deleteLrv:"Supprimer LRV", addLrv:"+ Ajouter une mesure LRV",
       conform:"CONFORME", nonConform:"NON CONFORME", waiting:"En attente",
@@ -419,6 +442,7 @@
     applyStaticTranslations();
     renderSurfaces();
     await renderHistory();
+    if(editingRecordCache) renderEditSurfaceFields(editingRecordCache);
     $("saveMessage").textContent="";
     $("exportMessage").textContent="";
   }
@@ -429,6 +453,8 @@
   ];
 
   let db = null;
+  let editingRecordId = null;
+  let editingRecordCache = null;
   let currentPhotoBlob = null;
   let currentPhotoName = "";
   let currentPhotoUrl = null;
@@ -764,6 +790,24 @@
   }
 
   async function saveAndNext(){
+    const project=$("project").value.trim();
+    const location=$("location").value.trim();
+
+    $("project").classList.remove("invalid");
+    $("location").classList.remove("invalid");
+
+    if(!project || !location){
+      if(!project) $("project").classList.add("invalid");
+      if(!location) $("location").classList.add("invalid");
+
+      if(!project && !location) $("saveMessage").textContent=t("requiredProjectLocation");
+      else if(!project) $("saveMessage").textContent=t("requiredProject");
+      else $("saveMessage").textContent=t("requiredLocation");
+
+      (!project ? $("project") : $("location")).focus();
+      return;
+    }
+
     const record=makeRecord();
     if(!record){
       $("saveMessage").textContent=t("invalidSave");
@@ -813,11 +857,13 @@
         </div>
         <div class="history-actions">
           <button class="btn secondary detail-btn" data-id="${r.id}" type="button">${t("viewDetails")}</button>
+          <button class="btn secondary edit-btn" data-id="${r.id}" type="button">${t("edit")}</button>
           <button class="btn danger delete-btn" data-id="${r.id}" type="button">${t("delete")}</button>
         </div>`;
       el.appendChild(div);
     }
     el.querySelectorAll(".detail-btn").forEach(b=>b.addEventListener("click",()=>showDetails(Number(b.dataset.id))));
+    el.querySelectorAll(".edit-btn").forEach(b=>b.addEventListener("click",()=>openEditMeasurement(Number(b.dataset.id))));
     el.querySelectorAll(".delete-btn").forEach(b=>b.addEventListener("click",async()=>{
       if(confirm(t("confirmDelete"))){await deleteRecord(Number(b.dataset.id));renderHistory();}
     }));
@@ -825,6 +871,75 @@
 
   function escapeHtml(s){
     return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+  }
+
+  function renderEditSurfaceFields(record){
+    const container=$("editSurfaces");
+    container.innerHTML="";
+    for(const s of record?.surfaces||[]){
+      const card=document.createElement("div");
+      card.className="card";
+      card.style.margin="10px 0";
+      const label=document.createElement("label");
+      const span=document.createElement("span");
+      span.textContent=`${t("description")} — ${s.id}`;
+      const input=document.createElement("input");
+      input.type="text";
+      input.autocomplete="off";
+      input.dataset.surfaceId=s.id;
+      input.value=displaySurfaceName(s.name,s.id);
+      label.append(span,input);
+      card.appendChild(label);
+      container.appendChild(card);
+    }
+  }
+
+  async function openEditMeasurement(id){
+    const record=await getRecord(id);
+    if(!record) return;
+    editingRecordId=id;
+    editingRecordCache=record;
+    $("editLocation").value=record.location||"";
+    $("editMessage").textContent="";
+    renderEditSurfaceFields(record);
+    openModal($("editModal"));
+    setTimeout(()=>$("editLocation").focus(),50);
+  }
+
+  async function saveEditedMeasurement(){
+    if(!editingRecordId || !editingRecordCache) return;
+
+    const location=$("editLocation").value.trim();
+    $("editLocation").classList.remove("invalid");
+    if(!location){
+      $("editLocation").classList.add("invalid");
+      $("editMessage").textContent=t("editLocationRequired");
+      $("editLocation").focus();
+      return;
+    }
+
+    const record={...editingRecordCache};
+    record.location=location;
+    record.surfaces=(record.surfaces||[]).map(s=>{
+      const input=$("editSurfaces").querySelector(`[data-surface-id="${s.id}"]`);
+      const value=input?.value.trim();
+      return {...s,name:value || surfaceName(s.id)};
+    });
+
+    const ok=await putRecord(record);
+    if(!ok){
+      $("editMessage").textContent=t("saveFailed");
+      return;
+    }
+
+    editingRecordCache=record;
+    await renderHistory();
+    $("editMessage").textContent=t("editSaved");
+    setTimeout(()=>{
+      closeModal($("editModal"));
+      editingRecordId=null;
+      editingRecordCache=null;
+    },250);
   }
 
   async function showDetails(id){
@@ -1114,28 +1229,252 @@
     $("exportMessage").textContent=t("projectExportDone",{n:records.length});
   }
 
+  function loadImageFromBlob(blob){
+    return new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(blob);
+      const img=new Image();
+      img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("image"));};
+      img.src=url;
+    });
+  }
+
+  function wrapCanvasText(ctx,text,maxWidth){
+    const words=String(text??"").split(/\s+/).filter(Boolean);
+    if(!words.length) return [""];
+    const lines=[];
+    let line=words[0];
+    for(let i=1;i<words.length;i++){
+      const test=line+" "+words[i];
+      if(ctx.measureText(test).width<=maxWidth) line=test;
+      else{lines.push(line);line=words[i];}
+    }
+    lines.push(line);
+    return lines;
+  }
+
+  async function renderRecordToPdfCanvases(record,index,total){
+    const W=1000,H=1414,M=70,BOTTOM=H-75;
+    const pages=[];
+    let canvas=null,ctx=null,y=0;
+
+    function newPage(){
+      if(canvas) pages.push(canvas);
+      canvas=document.createElement("canvas");
+      canvas.width=W;canvas.height=H;
+      ctx=canvas.getContext("2d");
+      ctx.fillStyle="#ffffff";
+      ctx.fillRect(0,0,W,H);
+      y=M;
+
+      ctx.fillStyle="#17212b";
+      ctx.font='700 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+      ctx.fillText(t("projectReport"),M,y);
+      y+=46;
+      ctx.font='24px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+      ctx.fillStyle="#667685";
+      ctx.fillText(`${t("measurement")} ${index}/${total}`,M,y);
+      y+=42;
+      ctx.fillStyle="#17212b";
+    }
+
+    function ensure(px){
+      if(y+px>BOTTOM) newPage();
+    }
+
+    function drawWrapped(text,size=24,bold=false,muted=false,indent=0){
+      ctx.font=`${bold?700:400} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+      ctx.fillStyle=muted?"#667685":"#17212b";
+      const lines=wrapCanvasText(ctx,text,W-(M*2)-indent);
+      for(const ln of lines){
+        ensure(size+14);
+        ctx.fillText(ln,M+indent,y);
+        y+=size+12;
+      }
+    }
+
+    function heading(text){
+      ensure(58);
+      y+=10;
+      drawWrapped(text,28,true,false,0);
+      y+=4;
+    }
+
+    newPage();
+
+    drawWrapped(`${t("project")}: ${record.project||"—"}`,24,true);
+    drawWrapped(`${t("location")}: ${record.location||"—"}`,24);
+    drawWrapped(`${t("date")}: ${localDateTime(record.createdAt)}`,22,false,true);
+    y+=12;
+
+    for(const s of record.surfaces||[]){
+      heading(`${s.id} — ${displaySurfaceName(s.name,s.id)}`);
+      for(let i=0;i<(s.values||[]).length;i++){
+        drawWrapped(`LRV ${i+1}: ${fmt(s.values[i],2)}`,23,false,false,18);
+      }
+      drawWrapped(`${t("average")}: ${fmt(s.average,2)}`,24,true,false,18);
+      y+=12;
+    }
+
+    const comps=displayedComparisons(record);
+    if(Number(record.surfaceCount)!==3 || comps.length){
+      heading(t("contrastResults"));
+      for(const c of comps){
+        const pass=comparisonPass(c);
+        drawWrapped(`${c.pair}: ${fmt(c.contrast,3)} — ${pass?t("conform"):t("nonConform")}`,24,true,false,18);
+      }
+      drawWrapped(t("requirement"),21,false,true,18);
+      y+=12;
+    }
+
+    if(record.photo){
+      try{
+        const img=await loadImageFromBlob(record.photo);
+        heading(t("photo"));
+        const maxW=W-M*2;
+        const maxH=600;
+        const scale=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight,1);
+        const dw=Math.max(1,img.naturalWidth*scale);
+        const dh=Math.max(1,img.naturalHeight*scale);
+        if(y+dh>BOTTOM){
+          newPage();
+          heading(t("photo"));
+        }
+        ctx.drawImage(img,M,y,dw,dh);
+        y+=dh+20;
+      }catch(e){}
+    }
+
+    if(canvas) pages.push(canvas);
+    return pages;
+  }
+
+  function concatBytes(parts){
+    const total=parts.reduce((n,p)=>n+p.length,0);
+    const out=new Uint8Array(total);
+    let pos=0;
+    for(const p of parts){out.set(p,pos);pos+=p.length;}
+    return out;
+  }
+
+  function asciiBytes(s){
+    return new TextEncoder().encode(s);
+  }
+
+  async function canvasJpegBytes(canvas){
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.88));
+    if(!blob) throw new Error("jpeg");
+    return new Uint8Array(await blob.arrayBuffer());
+  }
+
+  async function canvasesToPdfBlob(canvases){
+    const jpgs=[];
+    for(const c of canvases) jpgs.push(await canvasJpegBytes(c));
+
+    const pageW=595.28,pageH=841.89;
+    const objects=[];
+    const pageRefs=[];
+    let nextObj=3;
+    const defs=[];
+
+    for(let i=0;i<jpgs.length;i++){
+      const pageObj=nextObj++;
+      const contentObj=nextObj++;
+      const imageObj=nextObj++;
+      pageRefs.push(`${pageObj} 0 R`);
+      defs.push({pageObj,contentObj,imageObj,jpg:jpgs[i],canvas:canvases[i]});
+    }
+
+    objects[1]=asciiBytes(`<< /Type /Catalog /Pages 2 0 R >>`);
+    objects[2]=asciiBytes(`<< /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pageRefs.length} >>`);
+
+    for(const d of defs){
+      objects[d.pageObj]=asciiBytes(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] `+
+        `/Resources << /XObject << /Im0 ${d.imageObj} 0 R >> >> `+
+        `/Contents ${d.contentObj} 0 R >>`
+      );
+
+      const content=`q\n${pageW} 0 0 ${pageH} 0 0 cm\n/Im0 Do\nQ\n`;
+      const contentBytes=asciiBytes(content);
+      objects[d.contentObj]=concatBytes([
+        asciiBytes(`<< /Length ${contentBytes.length} >>\nstream\n`),
+        contentBytes,
+        asciiBytes(`endstream`)
+      ]);
+
+      objects[d.imageObj]=concatBytes([
+        asciiBytes(
+          `<< /Type /XObject /Subtype /Image /Width ${d.canvas.width} /Height ${d.canvas.height} `+
+          `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${d.jpg.length} >>\nstream\n`
+        ),
+        d.jpg,
+        asciiBytes(`\nendstream`)
+      ]);
+    }
+
+    const header=asciiBytes("%PDF-1.4\n");
+    const parts=[header];
+    const offsets=new Array(objects.length).fill(0);
+    let bytePos=header.length;
+
+    for(let i=1;i<objects.length;i++){
+      const pre=asciiBytes(`${i} 0 obj\n`);
+      const post=asciiBytes(`\nendobj\n`);
+      offsets[i]=bytePos;
+      parts.push(pre,objects[i],post);
+      bytePos+=pre.length+objects[i].length+post.length;
+    }
+
+    const xrefPos=bytePos;
+    let xref=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+    for(let i=1;i<objects.length;i++){
+      xref+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+    }
+    xref+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+    parts.push(asciiBytes(xref));
+
+    return new Blob([concatBytes(parts)],{type:"application/pdf"});
+  }
+
+  async function buildProjectPdf(records){
+    const canvases=[];
+    for(let i=0;i<records.length;i++){
+      const pages=await renderRecordToPdfCanvases(records[i],i+1,records.length);
+      canvases.push(...pages);
+    }
+    return canvasesToPdfBlob(canvases);
+  }
+
   async function exportProjectPdf(){
-    // Open meteen binnen de gebruikersklik, vóór IndexedDB/foto-awaits.
-    const w=createReportWindow(t("projectReport"));
-    if(!w) return;
+    const pdfWindow=window.open("","_blank");
+    if(!pdfWindow){
+      $("exportMessage").textContent=t("reportBlocked");
+      return;
+    }
+
+    pdfWindow.document.open();
+    pdfWindow.document.write(`<!doctype html><html lang="${currentLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PDF</title></head><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:30px"><p>${escapeHtml(t("pdfOpening"))}</p></body></html>`);
+    pdfWindow.document.close();
 
     try{
       const records=await getRecords();
       if(!records.length){
-        w.close();
+        pdfWindow.close();
         $("exportMessage").textContent=t("noSavedExport");
         return;
       }
-      let body="";
-      for(let i=0;i<records.length;i++){
-        body+=await recordToPrintHtml(records[i],i+1);
-      }
-      const projectName=$("project").value.trim() || records[0]?.project || "LRV-project";
-      const title=`${t("projectReport")} — ${projectName}`;
-      await openPrintReport(w,title,body);
-      $("exportMessage").textContent=t("projectPdfOpened",{n:records.length});
+
+      const pdfBlob=await buildProjectPdf(records);
+      const pdfUrl=URL.createObjectURL(pdfBlob);
+
+      // Alleen openen; nooit automatisch afdrukken.
+      pdfWindow.location.replace(pdfUrl);
+      $("exportMessage").textContent=t("pdfOpenedSimple");
+
+      setTimeout(()=>URL.revokeObjectURL(pdfUrl),5*60*1000);
     }catch(e){
-      try{w.document.body.innerHTML=`<h2>${escapeHtml(t("projectReportFailedTitle"))}</h2><p>${escapeHtml(t("closeRetry"))}</p>`;}catch(_){}
+      try{pdfWindow.document.body.innerHTML=`<p>${escapeHtml(t("projectReportFailed"))}</p>`;}catch(_){}
       $("exportMessage").textContent=t("projectReportFailed");
     }
   }
@@ -1167,13 +1506,13 @@
   $("langNl").addEventListener("click",()=>setLanguage("nl"));
   $("langFr").addEventListener("click",()=>setLanguage("fr"));
 
+  $("project").addEventListener("input",()=>{$("project").classList.remove("invalid");});
+  $("location").addEventListener("input",()=>{$("location").classList.remove("invalid");});
   $("surfaceCount").addEventListener("change",renderSurfaces);
   $("saveNext").addEventListener("click",saveAndNext);
   $("reset").addEventListener("click",resetMeasurement);
 
   $("newProject").addEventListener("click",startNewProject);
-  $("exportMeasurementPdf").addEventListener("click",exportCurrentMeasurementPdf);
-  $("exportMeasurementTxt").addEventListener("click",exportCurrentMeasurementTxt);
   $("exportProjectPdf").addEventListener("click",exportProjectPdf);
   $("exportProjectTxt").addEventListener("click",exportProjectTxt);
 
@@ -1185,11 +1524,16 @@
   $("photoPicker").addEventListener("change",e=>{if(e.target.files?.[0])handlePickedFile(e.target.files[0]);e.target.value="";});
   $("removePhoto").addEventListener("click",()=>setCurrentPhoto(null));
 
+  $("closeEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;});
+  $("cancelEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;});
+  $("saveEdit").addEventListener("click",saveEditedMeasurement);
+  $("editModal").addEventListener("click",e=>{if(e.target===$("editModal")){closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;}});
+  $("editLocation").addEventListener("input",()=>$("editLocation").classList.remove("invalid"));
   $("closeDetails").addEventListener("click",()=>closeModal($("detailModal")));
   $("detailModal").addEventListener("click",e=>{if(e.target===$("detailModal"))closeModal($("detailModal"));});
   $("cameraModal").addEventListener("click",e=>{if(e.target===$("cameraModal"))stopCamera();});
   document.addEventListener("keydown",e=>{
-    if(e.key==="Escape"){stopCamera();closeModal($("detailModal"));}
+    if(e.key==="Escape"){stopCamera();closeModal($("detailModal"));closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;}
   });
 
   $("clearHistory").addEventListener("click",async()=>{
