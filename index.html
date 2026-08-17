@@ -1250,99 +1250,173 @@
   }
 
   async function renderRecordToPdfCanvases(record,index,total){
-    const W=1000,H=1414,M=70,BOTTOM=H-75;
-    const pages=[];
-    let canvas=null,ctx=null,y=0;
+    // Eén A4-pagina per meting. De inhoud wordt dynamisch compacter gemaakt
+    // afhankelijk van het aantal LRV-waarden en de aanwezigheid van een foto.
+    const W=1000,H=1414;
+    const M=52;
+    const usableW=W-(M*2);
 
-    function newPage(){
-      if(canvas) pages.push(canvas);
-      canvas=document.createElement("canvas");
-      canvas.width=W;canvas.height=H;
-      ctx=canvas.getContext("2d");
-      ctx.fillStyle="#ffffff";
-      ctx.fillRect(0,0,W,H);
-      y=M;
+    const canvas=document.createElement("canvas");
+    canvas.width=W;
+    canvas.height=H;
+    const ctx=canvas.getContext("2d");
 
-      ctx.fillStyle="#17212b";
-      ctx.font='700 38px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-      ctx.fillText(t("projectReport"),M,y);
-      y+=46;
-      ctx.font='24px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-      ctx.fillStyle="#667685";
-      ctx.fillText(`${t("measurement")} ${index}/${total}`,M,y);
-      y+=42;
-      ctx.fillStyle="#17212b";
+    ctx.fillStyle="#ffffff";
+    ctx.fillRect(0,0,W,H);
+
+    const surfaces=record.surfaces||[];
+    const maxReadings=Math.max(1,...surfaces.map(s=>(s.values||[]).length));
+    const hasPhoto=Boolean(record.photo);
+
+    // Adaptieve typografie: bij veel ingevoerde waarden wordt alles iets compacter.
+    let bodySize=23;
+    let smallSize=19;
+    let headingSize=27;
+    let lineH=31;
+    let surfacePad=18;
+
+    if(maxReadings>5){
+      bodySize=20; smallSize=17; headingSize=24; lineH=27; surfacePad=14;
+    }
+    if(maxReadings>8){
+      bodySize=17; smallSize=15; headingSize=21; lineH=23; surfacePad=11;
+    }
+    if(maxReadings>12){
+      bodySize=14; smallSize=12; headingSize=18; lineH=19; surfacePad=9;
     }
 
-    function ensure(px){
-      if(y+px>BOTTOM) newPage();
+    function roundedRect(x,y,w,h,r=12,stroke="#d9e0e6",fill="#ffffff"){
+      ctx.beginPath();
+      ctx.roundRect(x,y,w,h,r);
+      ctx.fillStyle=fill;
+      ctx.fill();
+      ctx.strokeStyle=stroke;
+      ctx.lineWidth=2;
+      ctx.stroke();
     }
 
-    function drawWrapped(text,size=24,bold=false,muted=false,indent=0){
+    function text(text,x,y,size=bodySize,bold=false,muted=false,maxWidth=null){
       ctx.font=`${bold?700:400} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
       ctx.fillStyle=muted?"#667685":"#17212b";
-      const lines=wrapCanvasText(ctx,text,W-(M*2)-indent);
-      for(const ln of lines){
-        ensure(size+14);
-        ctx.fillText(ln,M+indent,y);
-        y+=size+12;
+      ctx.textBaseline="top";
+      if(maxWidth) ctx.fillText(String(text??""),x,y,maxWidth);
+      else ctx.fillText(String(text??""),x,y);
+    }
+
+    // HEADER
+    let y=46;
+    text(t("projectReport"),M,y,34,true,false);
+    text(`${t("measurement")} ${index}/${total}`,W-M-190,y+7,20,false,true,190);
+    y+=48;
+
+    // META
+    const metaH=108;
+    roundedRect(M,y,usableW,metaH,12);
+    const colW=usableW/3;
+    const metaPad=18;
+
+    text(t("project"),M+metaPad,y+15,17,true,true);
+    text(record.project||"—",M+metaPad,y+41,21,true,false,colW-(metaPad*2));
+
+    text(t("location"),M+colW+metaPad,y+15,17,true,true);
+    text(record.location||"—",M+colW+metaPad,y+41,21,true,false,colW-(metaPad*2));
+
+    text(t("date"),M+(colW*2)+metaPad,y+15,17,true,true);
+    text(localDateTime(record.createdAt),M+(colW*2)+metaPad,y+41,19,false,false,colW-(metaPad*2));
+    y+=metaH+16;
+
+    // OPPERVLAKKEN NAAST ELKAAR
+    const count=Math.max(1,surfaces.length);
+    const gap=12;
+    const surfW=(usableW-(gap*(count-1)))/count;
+
+    const valuesHeight=maxReadings*lineH;
+    const surfaceH=Math.max(
+      180,
+      58 + valuesHeight + lineH + (surfacePad*2)
+    );
+
+    for(let i=0;i<surfaces.length;i++){
+      const s=surfaces[i];
+      const x=M+i*(surfW+gap);
+      roundedRect(x,y,surfW,surfaceH,12);
+
+      text(`${s.id} — ${displaySurfaceName(s.name,s.id)}`,x+surfacePad,y+surfacePad,headingSize,true,false,surfW-(surfacePad*2));
+
+      let sy=y+surfacePad+headingSize+15;
+      for(let j=0;j<(s.values||[]).length;j++){
+        text(`LRV ${j+1}`,x+surfacePad,sy,smallSize,false,true);
+        text(fmt(s.values[j],2),x+surfW-surfacePad-85,sy,smallSize,true,false,85);
+        sy+=lineH;
       }
+
+      // Gemiddelde onderaan in het oppervlakblok.
+      const avgY=y+surfaceH-surfacePad-lineH;
+      ctx.strokeStyle="#e3e7eb";
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(x+surfacePad,avgY-8);
+      ctx.lineTo(x+surfW-surfacePad,avgY-8);
+      ctx.stroke();
+
+      text(t("average"),x+surfacePad,avgY,smallSize,true,true);
+      text(fmt(s.average,2),x+surfW-surfacePad-85,avgY,smallSize,true,false,85);
     }
 
-    function heading(text){
-      ensure(58);
-      y+=10;
-      drawWrapped(text,28,true,false,0);
-      y+=4;
-    }
+    y+=surfaceH+16;
 
-    newPage();
-
-    drawWrapped(`${t("project")}: ${record.project||"—"}`,24,true);
-    drawWrapped(`${t("location")}: ${record.location||"—"}`,24);
-    drawWrapped(`${t("date")}: ${localDateTime(record.createdAt)}`,22,false,true);
-    y+=12;
-
-    for(const s of record.surfaces||[]){
-      heading(`${s.id} — ${displaySurfaceName(s.name,s.id)}`);
-      for(let i=0;i<(s.values||[]).length;i++){
-        drawWrapped(`LRV ${i+1}: ${fmt(s.values[i],2)}`,23,false,false,18);
-      }
-      drawWrapped(`${t("average")}: ${fmt(s.average,2)}`,24,true,false,18);
-      y+=12;
-    }
-
+    // CONTRASTEN
     const comps=displayedComparisons(record);
     if(Number(record.surfaceCount)!==3 || comps.length){
-      heading(t("contrastResults"));
+      const contrastRows=Math.max(1,comps.length);
+      const contrastH=64+(contrastRows*32)+34;
+      roundedRect(M,y,usableW,contrastH,12);
+
+      text(t("contrastResults"),M+18,y+14,headingSize,true,false);
+
+      let cy=y+52;
       for(const c of comps){
         const pass=comparisonPass(c);
-        drawWrapped(`${c.pair}: ${fmt(c.contrast,3)} — ${pass?t("conform"):t("nonConform")}`,24,true,false,18);
+        text(c.pair,M+18,cy,smallSize,true,false);
+        text(fmt(c.contrast,3),M+245,cy,smallSize,true,false);
+        text(pass?t("conform"):t("nonConform"),M+395,cy,smallSize,true,false);
+        cy+=32;
       }
-      drawWrapped(t("requirement"),21,false,true,18);
-      y+=12;
+      text(t("requirement"),M+18,y+contrastH-29,15,false,true);
+      y+=contrastH+16;
     }
 
-    if(record.photo){
+    // FOTO: automatisch in de nog beschikbare ruimte.
+    if(hasPhoto){
       try{
         const img=await loadImageFromBlob(record.photo);
-        heading(t("photo"));
-        const maxW=W-M*2;
-        const maxH=600;
-        const scale=Math.min(maxW/img.naturalWidth,maxH/img.naturalHeight,1);
-        const dw=Math.max(1,img.naturalWidth*scale);
-        const dh=Math.max(1,img.naturalHeight*scale);
-        if(y+dh>BOTTOM){
-          newPage();
-          heading(t("photo"));
+        const remaining=H-M-y;
+        if(remaining>110){
+          roundedRect(M,y,usableW,remaining,12);
+          text(t("photo"),M+18,y+14,headingSize,true,false);
+
+          const photoTop=y+50;
+          const photoBottom=H-M-16;
+          const maxW=usableW-36;
+          const maxH=Math.max(40,photoBottom-photoTop);
+
+          const scale=Math.min(
+            maxW/img.naturalWidth,
+            maxH/img.naturalHeight,
+            1
+          );
+
+          const dw=Math.max(1,img.naturalWidth*scale);
+          const dh=Math.max(1,img.naturalHeight*scale);
+          const dx=M+(usableW-dw)/2;
+          const dy=photoTop+(maxH-dh)/2;
+
+          ctx.drawImage(img,dx,dy,dw,dh);
         }
-        ctx.drawImage(img,M,y,dw,dh);
-        y+=dh+20;
       }catch(e){}
     }
 
-    if(canvas) pages.push(canvas);
-    return pages;
+    return [canvas];
   }
 
   function concatBytes(parts){
