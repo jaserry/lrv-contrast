@@ -250,10 +250,8 @@
       </div>
       <div class="photo-zone" style="margin-top:10px">
         <div class="photo-actions">
-          <button id="editOpenCamera" class="btn primary" type="button"><span aria-hidden="true">📷</span> <span data-i18n="takePhoto">Foto nemen</span></button>
-          <button id="editChoosePhoto" class="btn secondary" type="button" data-i18n="choosePhoto">Kies foto</button>
+          <button id="editChoosePhoto" class="btn primary" type="button" data-i18n="choosePhoto">Kies foto</button>
         </div>
-        <input id="editCameraFallback" type="file" accept="image/*" capture="environment" hidden>
         <input id="editPhotoPicker" type="file" accept="image/*" hidden>
         <div id="editPhotoPreview" class="photo-preview">
           <img id="editPhotoPreviewImg" alt="Voorbeeld van foto" data-i18n-alt="photoPreviewAlt">
@@ -752,7 +750,6 @@
   function closeModal(el){el.classList.remove("open");el.setAttribute("aria-hidden","true");}
 
   async function startCamera(){
-    $("cameraModal").dataset.mode="current";
     const modal=$("cameraModal"),status=$("cameraStatus");
     if(!navigator.mediaDevices?.getUserMedia){
       $("cameraFallback").click();
@@ -775,7 +772,6 @@
     if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
     $("cameraVideo").srcObject=null;
     closeModal($("cameraModal"));
-    $("cameraModal").dataset.mode="";
   }
 
   async function capturePhoto(){
@@ -985,25 +981,7 @@
     }
   }
 
-  async function startEditCamera(){
-    // Gebruik dezelfde camera-fallback als de hoofdmeting, maar stuur het resultaat naar de bewerkte meting.
-    if(!navigator.mediaDevices?.getUserMedia){
-      $("editCameraFallback").click();
-      return;
-    }
-    try{
-      cameraStream=await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:"environment"}},audio:false
-      });
 
-      $("cameraVideo").srcObject=cameraStream;
-      $("cameraStatus").textContent=t("cameraHint");
-      $("cameraModal").dataset.mode="edit";
-      openModal($("cameraModal"));
-    }catch(e){
-      $("editCameraFallback").click();
-    }
-  }
 
 
 
@@ -1545,10 +1523,8 @@
   $("closeEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();});
   $("cancelEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();});
   $("saveEdit").addEventListener("click",saveEditedMeasurement);
-  $("editOpenCamera").addEventListener("click",startEditCamera);
   $("editChoosePhoto").addEventListener("click",()=>$("editPhotoPicker").click());
   $("editPhotoPicker").addEventListener("change",e=>{if(e.target.files?.[0])handleEditPickedFile(e.target.files[0]);e.target.value="";});
-  $("editCameraFallback").addEventListener("change",e=>{if(e.target.files?.[0])handleEditPickedFile(e.target.files[0]);e.target.value="";});
   $("editRemovePhoto").addEventListener("click",()=>{setEditingPhoto(null,"",true);$("editMessage").textContent="";});
   $("editModal").addEventListener("click",e=>{if(e.target===$("editModal")){closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();}});
   $("editLocation").addEventListener("input",()=>$("editLocation").classList.remove("invalid"));
