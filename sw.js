@@ -1,4 +1,4 @@
-const CACHE="lrv-contrast-v7";
+const CACHE="lrv-contrast-v8";
 const FILES=["./","./index.html","./manifest.webmanifest"];
 
 self.addEventListener("install",event=>{

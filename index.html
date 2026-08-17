@@ -240,6 +240,31 @@
       </label>
     </div>
     <div id="editSurfaces"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="topline">
+        <div>
+          <h3 data-i18n="editPhotoTitle">Foto</h3>
+          <div class="small muted" data-i18n="editPhotoDesc">Je kunt de bestaande foto vervangen, een foto toevoegen of de foto verwijderen.</div>
+        </div>
+      </div>
+      <div class="photo-zone" style="margin-top:10px">
+        <div class="photo-actions">
+          <button id="editOpenCamera" class="btn primary" type="button"><span aria-hidden="true">📷</span> <span data-i18n="takePhoto">Foto nemen</span></button>
+          <button id="editChoosePhoto" class="btn secondary" type="button" data-i18n="choosePhoto">Kies foto</button>
+        </div>
+        <input id="editCameraFallback" type="file" accept="image/*" capture="environment" hidden>
+        <input id="editPhotoPicker" type="file" accept="image/*" hidden>
+        <div id="editPhotoPreview" class="photo-preview">
+          <img id="editPhotoPreviewImg" alt="Voorbeeld van foto" data-i18n-alt="photoPreviewAlt">
+          <div class="actions" style="margin-top:10px">
+            <span id="editPhotoInfo" class="small muted"></span>
+            <button id="editRemovePhoto" class="btn danger" type="button" data-i18n="removePhoto">Verwijder foto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <p id="editMessage" class="small muted" role="status"></p>
     <div class="actions">
       <button id="saveEdit" class="btn primary" type="button" data-i18n="saveChanges">Wijzigingen opslaan</button>
@@ -281,6 +306,8 @@
       requiredProjectLocation:"Vul eerst een projectnaam en meetpunt / locatie in.",
       editLocationRequired:"Het meetpunt / de locatie mag niet leeg zijn.", editSaved:"Wijzigingen opgeslagen.",
       pdfOpening:"PDF wordt geopend…", pdfOpenedSimple:"PDF geopend in een nieuw venster.",
+      editPhotoTitle:"Foto bij deze meting", editPhotoDesc:"Je kunt de bestaande foto vervangen, een foto toevoegen of de foto verwijderen.",
+      currentPhoto:"Huidige foto", noPhotoEdit:"Er is momenteel geen foto gekoppeld aan deze meting.",
       surface:"Oppervlak", description:"Omschrijving", avg:"Gem.", average:"Gemiddelde",
       invalidValue:"Ongeldige waarde", deleteLrv:"Verwijder LRV", addLrv:"+ LRV-meting toevoegen",
       conform:"CONFORM", nonConform:"NIET CONFORM", waiting:"Wachten",
@@ -344,6 +371,8 @@
       requiredProjectLocation:"Saisissez d’abord un nom de projet et un point de mesure / une localisation.",
       editLocationRequired:"Le point de mesure / la localisation ne peut pas être vide.", editSaved:"Modifications enregistrées.",
       pdfOpening:"Ouverture du PDF…", pdfOpenedSimple:"PDF ouvert dans une nouvelle fenêtre.",
+      editPhotoTitle:"Photo associée à cette mesure", editPhotoDesc:"Vous pouvez remplacer la photo existante, ajouter une photo ou la supprimer.",
+      currentPhoto:"Photo actuelle", noPhotoEdit:"Aucune photo n’est actuellement associée à cette mesure.",
       surface:"Surface", description:"Description", avg:"Moy.", average:"Moyenne",
       invalidValue:"Valeur invalide", deleteLrv:"Supprimer LRV", addLrv:"+ Ajouter une mesure LRV",
       conform:"CONFORME", nonConform:"NON CONFORME", waiting:"En attente",
@@ -455,6 +484,10 @@
   let db = null;
   let editingRecordId = null;
   let editingRecordCache = null;
+  let editingPhotoBlob = null;
+  let editingPhotoName = "";
+  let editingPhotoUrl = null;
+  let editPhotoRemoved = false;
   let currentPhotoBlob = null;
   let currentPhotoName = "";
   let currentPhotoUrl = null;
@@ -719,6 +752,7 @@
   function closeModal(el){el.classList.remove("open");el.setAttribute("aria-hidden","true");}
 
   async function startCamera(){
+    $("cameraModal").dataset.mode="current";
     const modal=$("cameraModal"),status=$("cameraStatus");
     if(!navigator.mediaDevices?.getUserMedia){
       $("cameraFallback").click();
@@ -741,6 +775,7 @@
     if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
     $("cameraVideo").srcObject=null;
     closeModal($("cameraModal"));
+    $("cameraModal").dataset.mode="";
   }
 
   async function capturePhoto(){
@@ -880,19 +915,98 @@
       const card=document.createElement("div");
       card.className="card";
       card.style.margin="10px 0";
+
+      const top=document.createElement("div");
+      top.className="topline";
+
+      const title=document.createElement("strong");
+      title.textContent=`${t("description")} — ${s.id}`;
+
+      const avg=document.createElement("span");
+      avg.className="badge";
+      avg.textContent=`${t("avg")} ${fmt(s.average,2)}`;
+
+      top.append(title,avg);
+
       const label=document.createElement("label");
-      const span=document.createElement("span");
-      span.textContent=`${t("description")} — ${s.id}`;
+      label.style.marginTop="10px";
       const input=document.createElement("input");
       input.type="text";
       input.autocomplete="off";
       input.dataset.surfaceId=s.id;
       input.value=displaySurfaceName(s.name,s.id);
-      label.append(span,input);
-      card.appendChild(label);
+      label.appendChild(input);
+
+      card.append(top,label);
       container.appendChild(card);
     }
   }
+
+  function setEditingPhoto(blob,name="",removed=false){
+    if(editingPhotoUrl){
+      URL.revokeObjectURL(editingPhotoUrl);
+      editingPhotoUrl=null;
+    }
+
+    editingPhotoBlob=blob||null;
+    editingPhotoName=name||"";
+    editPhotoRemoved=Boolean(removed);
+
+    if(editingPhotoBlob){
+      editingPhotoUrl=URL.createObjectURL(editingPhotoBlob);
+      $("editPhotoPreviewImg").src=editingPhotoUrl;
+      $("editPhotoPreview").style.display="block";
+      $("editPhotoInfo").textContent=`${Math.max(1,Math.round(editingPhotoBlob.size/1024))} KB`;
+    }else{
+      $("editPhotoPreviewImg").removeAttribute("src");
+      $("editPhotoPreview").style.display="none";
+      $("editPhotoInfo").textContent="";
+    }
+  }
+
+  function resetEditingPhotoState(){
+    if(editingPhotoUrl){
+      URL.revokeObjectURL(editingPhotoUrl);
+      editingPhotoUrl=null;
+    }
+    editingPhotoBlob=null;
+    editingPhotoName="";
+    editPhotoRemoved=false;
+  }
+
+  async function handleEditPickedFile(file){
+    try{
+      $("editMessage").textContent=t("photoProcessing");
+      const blob=await imageFileToCompressedBlob(file);
+      setEditingPhoto(blob,file?.name||"foto.jpg",false);
+      $("editMessage").textContent=t("photoAdded");
+    }catch(e){
+      $("editMessage").textContent=t("photoError");
+    }
+  }
+
+  async function startEditCamera(){
+    // Gebruik dezelfde camera-fallback als de hoofdmeting, maar stuur het resultaat naar de bewerkte meting.
+    if(!navigator.mediaDevices?.getUserMedia){
+      $("editCameraFallback").click();
+      return;
+    }
+    try{
+      cameraStream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:"environment"}},audio:false
+      });
+
+      $("cameraVideo").srcObject=cameraStream;
+      $("cameraStatus").textContent=t("cameraHint");
+      $("cameraModal").dataset.mode="edit";
+      openModal($("cameraModal"));
+    }catch(e){
+      $("editCameraFallback").click();
+    }
+  }
+
+
+
 
   async function openEditMeasurement(id){
     const record=await getRecord(id);
@@ -902,6 +1016,8 @@
     $("editLocation").value=record.location||"";
     $("editMessage").textContent="";
     renderEditSurfaceFields(record);
+    resetEditingPhotoState();
+    setEditingPhoto(record.photo||null,record.photoName||"",false);
     openModal($("editModal"));
     setTimeout(()=>$("editLocation").focus(),50);
   }
@@ -926,6 +1042,14 @@
       return {...s,name:value || surfaceName(s.id)};
     });
 
+    if(editPhotoRemoved){
+      record.photo=null;
+      record.photoName=null;
+    }else if(editingPhotoBlob){
+      record.photo=editingPhotoBlob;
+      record.photoName=editingPhotoName||record.photoName||"foto.jpg";
+    }
+
     const ok=await putRecord(record);
     if(!ok){
       $("editMessage").textContent=t("saveFailed");
@@ -939,6 +1063,7 @@
       closeModal($("editModal"));
       editingRecordId=null;
       editingRecordCache=null;
+      resetEditingPhotoState();
     },250);
   }
 
@@ -1109,113 +1234,6 @@
         </section>` : ""}
         ${photoData?`<section class="box photo"><h3>${t("photo")}</h3><img src="${photoData}" alt="${escapeHtml(t("photoAtMeasurement"))}"></section>`:""}
       </article>`;
-  }
-
-  function createReportWindow(title){
-    // Meteen openen binnen de klik-handler. Dit voorkomt pop-upblokkering in Safari/iOS.
-    const w=window.open("","_blank");
-    if(!w){
-      $("exportMessage").textContent=t("reportBlocked");
-      return null;
-    }
-    w.document.open();
-    w.document.write(`<!doctype html><html lang="${currentLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title>
-      <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding:24px;color:#17212b}.loading{max-width:520px;margin:12vh auto;text-align:center}.spinner{width:38px;height:38px;border:4px solid #dce4ec;border-top-color:#0b5fff;border-radius:50%;margin:20px auto;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}</style>
-      </head><body><div class="loading"><h2>${escapeHtml(t("preparingReport"))}</h2><div class="spinner"></div><p>${escapeHtml(t("reportUpdating"))}</p></div></body></html>`);
-    w.document.close();
-    return w;
-  }
-
-  async function openPrintReport(w,title,bodyHtml){
-    if(!w) return;
-    const css=`
-      *{box-sizing:border-box}
-      body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#17212b;margin:0;font-size:11pt;background:#f3f5f7}
-      .toolbar{position:sticky;top:0;z-index:10;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid #d9e0e6}
-      .toolbar button{border:0;border-radius:10px;background:#0b5fff;color:#fff;font:inherit;font-weight:700;padding:11px 14px}
-      .toolbar .hint{font-size:10pt;color:#667685}
-      .paper{max-width:980px;margin:18px auto;background:#fff;padding:24px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
-      h1{font-size:20pt;margin:0 0 5px}
-      h2{font-size:15pt;margin:18px 0 10px}
-      h3{font-size:11.5pt;margin:0 0 8px}
-      .subtitle{color:#667685;margin:0 0 18px}
-      .measurement{break-after:page}
-      .measurement:last-child{break-after:auto}
-      .meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
-      .box{border:1px solid #d9e0e6;border-radius:10px;padding:12px;margin:10px 0;break-inside:avoid}
-      .surfaces{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-      .row{display:flex;justify-content:space-between;gap:12px;align-items:start}
-      table{width:100%;border-collapse:collapse}
-      th,td{text-align:left;padding:6px;border-bottom:1px solid #e3e7eb}
-      th{font-size:9.5pt;color:#52616f}
-      .pass{font-weight:700;color:#087a43}
-      .fail{font-weight:700;color:#b42318}
-      .small{font-size:9.5pt;color:#667685}
-      .photo img{max-width:100%;max-height:520px;object-fit:contain}
-      @media(max-width:700px){.meta,.surfaces{grid-template-columns:1fr}.paper{margin:0;padding:14px;box-shadow:none}.toolbar{align-items:flex-start;flex-direction:column}}
-      @media print{
-        @page{size:auto;margin:12mm}
-        body{margin:0;background:#fff}
-        .toolbar{display:none!important}
-        .paper{max-width:none;margin:0;padding:0;box-shadow:none}
-        .measurement{break-after:page}
-        .measurement:last-child{break-after:auto}
-      }`;
-
-    w.document.open();
-    w.document.write(`<!doctype html><html lang="${currentLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head>
-      <body>
-        <div class="toolbar">
-          <div><strong>${escapeHtml(t("reportReady"))}</strong><div class="hint">${escapeHtml(t("reportHint"))}</div></div>
-          <button type="button" onclick="window.print()">${escapeHtml(t("saveSharePdf"))}</button>
-        </div>
-        <main class="paper">
-          <h1>${escapeHtml(title)}</h1>
-          <p class="subtitle">LRV-contrast · |LRV₁ − LRV₂| / (LRV₁ + LRV₂) · ${escapeHtml(t("reportRequirement").toLowerCase())}</p>
-          ${bodyHtml}
-        </main>
-      </body></html>`);
-    w.document.close();
-
-    const images=[...w.document.images];
-    await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=res;img.onerror=res;})));
-    w.focus();
-
-    // Automatisch proberen; als iOS dit niet toont, blijft het rapport geopend met de duidelijke knop hierboven.
-    setTimeout(()=>{ try{ w.print(); }catch(e){} },350);
-  }
-
-  async function exportCurrentMeasurementTxt(){
-    const record=makeRecord();
-    if(!record){
-      $("exportMessage").textContent=t("fillCurrent");
-      return;
-    }
-    record.createdAt=new Date().toISOString();
-    const base=safeFilename(`${record.project||"LRV"}-${record.location||t("measurementFile")}`);
-    downloadText(`${base}.txt`,recordToText(record));
-    $("exportMessage").textContent=t("measurementTxtDone");
-  }
-
-  async function exportCurrentMeasurementPdf(){
-    const record=makeRecord();
-    if(!record){
-      $("exportMessage").textContent=t("fillCurrent");
-      return;
-    }
-    const title=`${t("contrastMeasurement")} — ${record.location||record.project||t("measurementFile")}`;
-    const w=createReportWindow(title);
-    if(!w) return;
-
-    try{
-      record.createdAt=new Date().toISOString();
-      const body=await recordToPrintHtml(record);
-      await openPrintReport(w,title,body);
-      $("exportMessage").textContent=t("pdfOpened");
-    }catch(e){
-      try{w.document.body.innerHTML=`<h2>${escapeHtml(t("reportFailedTitle"))}</h2><p>${escapeHtml(t("closeRetry"))}</p>`;}catch(_){}
-      $("exportMessage").textContent=t("reportFailed");
-    }
   }
 
   async function exportProjectTxt(){
@@ -1524,16 +1542,21 @@
   $("photoPicker").addEventListener("change",e=>{if(e.target.files?.[0])handlePickedFile(e.target.files[0]);e.target.value="";});
   $("removePhoto").addEventListener("click",()=>setCurrentPhoto(null));
 
-  $("closeEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;});
-  $("cancelEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;});
+  $("closeEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();});
+  $("cancelEdit").addEventListener("click",()=>{closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();});
   $("saveEdit").addEventListener("click",saveEditedMeasurement);
-  $("editModal").addEventListener("click",e=>{if(e.target===$("editModal")){closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;}});
+  $("editOpenCamera").addEventListener("click",startEditCamera);
+  $("editChoosePhoto").addEventListener("click",()=>$("editPhotoPicker").click());
+  $("editPhotoPicker").addEventListener("change",e=>{if(e.target.files?.[0])handleEditPickedFile(e.target.files[0]);e.target.value="";});
+  $("editCameraFallback").addEventListener("change",e=>{if(e.target.files?.[0])handleEditPickedFile(e.target.files[0]);e.target.value="";});
+  $("editRemovePhoto").addEventListener("click",()=>{setEditingPhoto(null,"",true);$("editMessage").textContent="";});
+  $("editModal").addEventListener("click",e=>{if(e.target===$("editModal")){closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();}});
   $("editLocation").addEventListener("input",()=>$("editLocation").classList.remove("invalid"));
   $("closeDetails").addEventListener("click",()=>closeModal($("detailModal")));
   $("detailModal").addEventListener("click",e=>{if(e.target===$("detailModal"))closeModal($("detailModal"));});
   $("cameraModal").addEventListener("click",e=>{if(e.target===$("cameraModal"))stopCamera();});
   document.addEventListener("keydown",e=>{
-    if(e.key==="Escape"){stopCamera();closeModal($("detailModal"));closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;}
+    if(e.key==="Escape"){stopCamera();closeModal($("detailModal"));closeModal($("editModal"));editingRecordId=null;editingRecordCache=null;resetEditingPhotoState();}
   });
 
   $("clearHistory").addEventListener("click",async()=>{
